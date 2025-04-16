@@ -1,5 +1,12 @@
 module Types where
 
+import qualified Data.Map as Map
+
+-- | Core data types for values in the language
+data Value
+  = IntValue Integer
+  deriving (Eq)
+
 -- | The stack is a list of values
 type Stack = [Value]
 
