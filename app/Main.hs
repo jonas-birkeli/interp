@@ -22,3 +22,9 @@ determineRunMode (filePath:_) = do
 data RunMode = ReplMode
     | FileMode FilePath
     | InvalidFileMode FilePath
+
+-- | Execute a particular run mode
+executeMode :: RunMode -> IO ()
+executemode ReplMode = startRepl
+executeMode (FileMode path) = runWithPrelude path
+executeMode (InvalidFileMode path) = handleInvalidFile path
