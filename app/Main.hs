@@ -42,3 +42,17 @@ welcomeMessages =
         "You have now entered REPL mode",
         "Enter ':q' or ':quit' to exit."
     ]
+
+-- | Handle an invalid file path
+handleInvalidFile :: FilePath -> IO ()
+handleInvalidFile path = do
+    mapM_ putStrLn $ invalidFileMessages path
+    startRepl
+
+-- | Invalid file message for when provided invalid file
+invalidFileMessages :: FilePath -> [String]
+invalidFileMessages path =
+    [
+        "File not found: " ++ path,
+        "Starting REPL mode instead"
+    ]
