@@ -28,3 +28,17 @@ executeMode :: RunMode -> IO ()
 executemode ReplMode = startRepl
 executeMode (FileMode path) = runWithPrelude path
 executeMode (InvalidFileMode path) = handleInvalidFile path
+
+-- | Start the REPL
+startRepl :: IO ()
+startRepl = do
+    mapM_ putStrLn welcomeMessages
+    runRepl initialState -- TODO add this
+
+-- | Welcome messages for REPL mode
+welcomeMessages :: [String]
+welcomeMessages = 
+    [ 
+        "You have now entered REPL mode",
+        "Enter ':q' or ':quit' to exit."
+    ]
