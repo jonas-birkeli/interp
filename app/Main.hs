@@ -3,6 +3,8 @@ module Main (main) where
 import Lib
 import System.Environment (getArgs)
 import System.Directory (doesFileExist)
+import Data.Maybe (fromMaybe)
+import Control.Monad.Extra (ifM)
 
 -- | The main entry point
 main :: IO ()
@@ -56,3 +58,51 @@ invalidFileMessages path =
         "File not found: " ++ path,
         "Starting REPL mode instead"
     ]
+
+{-
+-- | Run a file with prelude if available
+runWithPrelude :: FilePath -> IO ()
+runWithPrelude filePath = do
+    maybePreludeState <- loadPrelude
+    finalState <- fromMaybe (runFile filePath) $ do
+        preludeState <- maybePreludeState
+        pure $ loadAndRunFile filePath preludeState
+    void finalState
+    -}
+
+-- | Run a file with prelude if available
+runWithPrelude :: FilePath -> IO ()
+runWithPrelude filePath = loadPrelude >>= maybe (runfile filePath) (loadAndRunFile filePath) >>= void
+
+{-
+-- | Load the prelude file if it exists
+loadPrelude :: IO (Maybe (IO State))
+loadPrelude = do
+    preludeExists <- doesFileExist "prelude.bprog"
+    if preludeExists
+        then do
+            putStrLn "Loading prelude..."
+            prelude <- readFile "prelude.bprog"
+            pure $ Just $ evalProgram prelude initialState -- TODO make evalProgram
+        else pure Nothing
+    -}
+
+-- | Load the prelude file if it exists
+loadPrelude :: IO (Maybe (IO State))
+loadPrelude = ifM (doesFileExist "prelude.bprog") -- Monadic if-statementt :)
+    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.bprog") -- Wrap in Just . because maybe
+    (pure Nothing) -- TODO make evalProgram
+
+{-
+-- | Load and run a file with a state
+loadAndRunFile :: FilePath -> IO State -> IO State
+loadAndRunFile filePath getInitialState = do
+    initialState <- getInitialState 
+    program <- readFile filePath
+    evalProgram program initialState
+    -}
+
+-- | Load and run file with a state
+loadAndRunFile :: FilePath -> IO State -> IO State
+loadAndRunFile filePath getInitialState = 
+    getInitialState >>= \state -> readFile filePath >>= flip evalProgram state
