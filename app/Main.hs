@@ -6,17 +6,14 @@ import System.Directory (doesFileExist)
 
 -- | The main entry point
 main :: IO ()
-main = do
-    args <- getArgs
-    mode <- determineRunMode args
-    executeMode mode
+main = getArgs >>= determineRunMode >>= executeMode
 
 
 -- | Determine the run mode based on command line arguments - File or not basically
 determineRunMode :: [String] -> IO RunMode
-determineRunMode = pure ReplMode
+determineRunMode [] = pure ReplMode
 determineRunMode (filePath:_) = do
-    fileExists <- doesFileExist
+    fileExists <- doesFileExist filePath
     pure $ if fileExists
         then FileMode filePath
         else InvalidFileMode filepath
