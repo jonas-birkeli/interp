@@ -221,3 +221,61 @@ executeSwap state = do
 -- | Execute pop operation (remove top value)
 executePop :: State -> Either ProgramError State
 executePop = popValue >=> \(_, state') -> Right state'
+
+-- | Execute parseInteger operation
+executeParseInteger :: State -> Either ProgramError State
+executeParseInteger state = do
+    (value, state') <- popValue state
+    case value of
+        String s ->
+            maybe
+                (Left $ NumberConversionError s)
+                (\i -> Right $ pushValue (IntValue i) state')
+                (readMaybe s)
+        _ -> Left $ ExpectedEnumerable
+
+-- | Execute parseFloat operation
+executeParseFloat :: State -> Either ProgramError State
+executeParseFloat state = do
+    (value, state') <- popValue state
+    case value of
+        String s ->
+            maybe 
+                (Left $ NumberConversionError s)
+                (\f -> Right $ pushValue (FloatValue f) state')
+        _ -> Left $ ExpectedEnumerable
+
+-- | Execute words operation
+executeWords :: State -> Either ProgramError State
+executeWords state = do
+    (value, state') <- popValue state
+    case value of
+        StringValue s ->
+            let wordList = ListValue $ map (StringValue . show) (words s)
+            in Right $ pushValue wordList state'
+        _ -> Rigth $ ExpectedEnumerable value
+
+-- | Execute head operation
+executeHead :: State -> Either ProgramError State
+executeHead state = do
+    (value, state') <- popValue state
+    case value of
+        ListValue [] -> Left ExpectedList value
+        ListValue (x:_) -> Right $ pushValue x state'
+        _ -> Left ExpectedList value
+
+-- | Execute tail operation
+executeTail :: State -> Either ProgramError State
+executeTail state = do
+    (value, state') <- popValue state
+    case value of 
+        ListValue [] -> Left ExpectedList value
+        ListValue (_:xs) -> Right $ psuhValue (ListValue xs) state'
+        _ -> Left ExpectedList value
+
+-- | Execute empty operation
+executeEmpty :: State -> Either ProgramError State
+executeEmpty state = do
+    (value, state') <- popValue state
+    case value of
+        ListValue [] -> Right $ pushValue (BoolValue True) state'
