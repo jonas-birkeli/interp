@@ -114,3 +114,24 @@ popValues n state
 -- | Pop two values from stack
 popTwoValues :: State -> Either ProgramError (Value, Value, State)
 popTwoValues state = popValues 2 state >>= \([v1, v2], state') -> Right (v1, v2, state') 
+
+-- | Basic arithmetic operations
+executeArithmetic :: (Double -> Double -> Double) -> State -> Either ProgramError State
+executeArithmetic op state = 
+    popTwoValues state >>= \(v1, v2, state') ->
+        applyArithmetic op v1 v2 >>= \result ->
+            Right (pushValue result state')
+
+-- | Apply arithmetic operation to values
+applyArithmetic :: (Double -> Double -> Double) -> Value -> Value -> Either ProgramError Value
+applyArithmetic op v1 v2 = case (v1, v2) of
+    (IntValue i1, IntValue i2) ->
+        Right $ IntValue $ round $ op (fromIntegral i1) (fromIntegral i2)
+    (IntValue i1, FloatValue f2) ->
+        Right $ FloatValue $ op (fromIntegral i1) f2
+    (FloatValue f1, IntValue i2) ->
+        Right $ FloatValue $ op f1 (fromIntegral i2)
+    (FloatValue f1, FloatValue f2) ->
+        Right $ FloatValue $ op f1 f2
+    _ -> Left $ ExpectedBoolOrNumber v1
+
