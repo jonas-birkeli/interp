@@ -59,7 +59,35 @@ executeToken token = case token of
     EachToken -> executeEach
     ExecToken -> executeExec
 
-
+-- | Execute an operator token
+executeOperator :: String -> State -> Either ProgramError State
+executeOperator op = case op of
+    "+" -> executeArithmetic (+)
+    "-" -> executeArithmetic (-)
+    "*" -> executeArithmetic (*)
+    "div" -> executeDivision div
+    "/" -> executeDivision (/)
+    "<" -> executeComparison (<)
+    ">" -> executeComparison (>)
+    "==" -> executeEquality
+    "&&" -> executeLogical (&&)
+    "||" -> executeLogical (||)
+    "not" -> executeNot
+    "dup" -> executeDup
+    "swap" -> executeSwap
+    "pop" -> executePop
+    "parseInteger" -> executeParseInteger
+    "parseFloat" -> executeparseFloat
+    "words" -> executeWords
+    "head" -> executeHead
+    "tail" -> executeTail
+    "empty" -> executeEmpty
+    "length" -> executeLength
+    "cons" -> executeCons
+    "append" -> executeAppend
+    "print" -> executePrint
+    "read" -> executeRead
+    _ -> \s -> Left $ UnknownSymbol op
 
 
 -- | Push a value onto the stack
