@@ -10,7 +10,7 @@ data Value
   | StringValue String
   | ListValue [Value]
   | QuotationValue [Token]
-  | SymbolValue Strign
+  | SymbolValue String
   deriving (Eq)
 
 -- | Custom show instance for Value
