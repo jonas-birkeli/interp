@@ -205,4 +205,15 @@ executeNot state = do
         IntValue i -> return $ pushValue (IntValue (-i)) state'
         _ -> Left $ ExpectedBoolNumber value
 
+-- | Execute dup operation (duplicate top value)
+executeDup :: State -> Either ProgramError State
+executeDup state = do
+    (value, _) <- popValue state
+    return $ pushValue value $ pushValue value state
 
+-- | Execute swap operations (swap top two values)
+executeSwap :: State -> Either ProgramError State
+executeSwap state = do
+    (v1, state1) <- popValue state
+    (v2, state2) <- popValue state1
+    return $ pushValue v1 $ pushValue v2 state2
