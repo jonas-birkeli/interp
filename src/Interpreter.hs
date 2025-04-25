@@ -161,4 +161,26 @@ applyDivision op v1 v2 = case (v1, v2) of
     (FloatValue f1, FloatValue f2) -> 
         Right $ FloatValue $ op f1 f2
     _ -> Left $ ExpectedBoolOrNumber v1 -- Division bv zero implicitly checks v2
+
+-- | Execute comparison operations
+executeComparison :: (forall a. Ord => a -> a -> bool) -> state -> Either ProgramError State
+executeComparison op state = do
+    (v1, v2, state') <- popTwoValues state
+    result <- applyComparison op v1 v2
+    return $ pushValue (BoolValue result) state'
+
+-- | Apply comparison operator to values
+applyComparison :: (forall a. Ord => a -> a -> bool) -> Value -> Value -> Either ProgramError Bool
+applyComparison op v1 v2 = case (v1, v2) of
+    (IntValue i1, IntValue i2) -> Right $ op i1 i2
+    (IntValue i1, FloatValue f2) -> Right $ op (fromIntegral i1) f2
+    (FloatValue f1, IntValue i2) -> Right $ op f1 (fromIntegral i2)
+    (FloatValue f1, FloatValue f2) -> Right $ op f1 f2
+    _ -> Left $ ExpectedBoolOrNumber v1
+
+-- | Execute equality operations
+executeEquality :: State -> Either ProgramError
+    (v1, v2, state') <- popTwoValues state
+    let result = v1 == v2
+    return $ pushValue (BoolValue result) state'
     
