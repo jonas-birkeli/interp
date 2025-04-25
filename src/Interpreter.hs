@@ -217,3 +217,7 @@ executeSwap state = do
     (v1, state1) <- popValue state
     (v2, state2) <- popValue state1
     return $ pushValue v1 $ pushValue v2 state2
+
+-- | Execute pop operation (remove top value)
+executePop :: State -> Either ProgramError State
+executePop = popValue >=> \(_, state') -> Right state'
