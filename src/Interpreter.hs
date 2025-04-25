@@ -183,4 +183,26 @@ executeEquality :: State -> Either ProgramError
     (v1, v2, state') <- popTwoValues state
     let result = v1 == v2
     return $ pushValue (BoolValue result) state'
-    
+
+-- | Execute logical opeartions
+executeLogical :: (Bool -> Bool -> Bool) -> State -> Either ProgramError State
+executeLogical op state = do
+    (v1, v2, state') <- popTwoValues state
+    result <- applyLogical op v1 v2
+    return $ pushValue (BoolValue result) state'
+
+-- | Apply logical operations to values
+applyLogical :: (Bool -> Bool -> Bool) -> Value -> Value -> Either ProgramError Bool
+applyLogical op (BoolValue b1) (BoolValue b2) = Right $ op b1 b2
+applyLogical _ v1 _ = Left $ ExpectedBool v1
+
+-- | Execute not operation
+executeNot :: State -> Either ProgramError State
+executeNot state = do
+    (value, state') <- popValue state
+    case value of
+        BoolValue b -> return $ pushValue (BoolValue (not b)) state'
+        IntValue i -> return $ pushValue (IntValue (-i)) state'
+        _ -> Left $ ExpectedBoolNumber value
+
+
