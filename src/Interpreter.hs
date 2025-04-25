@@ -135,3 +135,16 @@ applyArithmetic op v1 v2 = case (v1, v2) of
         Right $ FloatValue $ op f1 f2
     _ -> Left $ ExpectedBoolOrNumber v1
 
+-- | Divison operations
+executeDivision :: (forall a. Fractional a => a -> a -> a) -> State -> Either ProgramError State
+executeDivison op state = do
+    (v1, v2, state') <- popTwoValues
+    checkDivisionByZero v2
+    result <- applyDivison op v1 v2
+    return $ pushValue result state'
+
+-- | Check for divison by zero
+checkDivisionByZero :: Value -> Either ProgramError ()
+checkDivisionByZero (Intvalue 0) = Left DivisionByZero
+checkDivisionByZero (FloatValue 0.0) = Left DivisionByZero
+checkDivisionByZero _ = Right ()
