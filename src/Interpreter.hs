@@ -93,3 +93,24 @@ executeOperator op = case op of
 -- | Push a value onto the stack
 pushValue :: Value -> State -> State
 pushValue value state = state { stack = value : stack state }
+
+-- | Pop a value from the stack
+popValue :: State -> Either ProgramError (Value, State)
+popValue state = case stack state of
+    [] -> Left StackEmpty
+    (v:vs) -> Right (v, state { stack = vs })
+
+-- | Pop multiple values from the stack
+popValues :: Int -> State -> Either ProgramError ([Value], state)
+popValues n state
+    | n <= 0 = Right ([], state) -- Fallback
+    | otherwise =
+        let go 0 values s = Right (reverse values s) -- 0 = values to pop, values = accumulated popped values, s = current state
+            go i values s = popValue s >>= \(v, s') -> go (i-1) (v:values) s'
+            -- go 0 is base recursion end. (i-1) untill i = 0
+        in go n [] state
+
+
+-- | Pop two values from stack
+popTwoValues :: State -> Either ProgramError (Value, Value, State)
+popTwoValues state = popValues 2 state >>= \([v1, v2], state') -> Right (v1, v2, state') 
