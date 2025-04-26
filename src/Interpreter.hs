@@ -327,3 +327,20 @@ executeFunction state = do
         (QuotationValue _, symbolValue name) -> 
             Right $ state2 { dictionary = Map.insert name quotation (dictionary state2) }
         (_, _) -> Left $ ExpectedQuotation quotation
+
+-- | Execute if operation
+executeIf :: State -> Either ProgramError State
+executeIf state = do
+    (elseBranch, state1) <- popValue state
+    (thenBranch, state2) <- popValue state1
+    (condition, state3) <- popValue state2
+    case condition of
+        BoolValue True -> executeQuotationOrValue thenBranch state3
+        BoolValue False -> executeQuotationOrValue elseBranch state3
+        _ -> Left $ ExpectedBool condition
+
+-- | Execute a quotation or a direct value
+executeQuotationOrValue :: Value -> State -> Either ProgramError State
+executeQuotationOrValue value state = case value of
+    QuotationValue tokens -> executeProgram tokens state >>= (\s, _) -> Right s
+    _ -> Right $ pushValue value state
