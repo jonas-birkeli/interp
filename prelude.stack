@@ -1,0 +1,15 @@
+{-- Stack Intepreter Prelude --}
+
+{-- Basic utility functions --}
+
+{-- Increment a number by 1 --}
+inc { 1 + } fun
+
+{-- Decrement a number by 1 --}
+dec { 1 - } fun
+
+{-- Double a number --}
+double { 2 * } fun
+
+{-- Square a number --}
+square { dup * } fun
