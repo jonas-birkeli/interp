@@ -239,18 +239,19 @@ executeParseInteger state = do
                 (Left $ NumberConversionError s)
                 (\i -> Right $ pushValue (IntValue i) state')
                 (readMaybe s)
-        _ -> Left $ ExpectedEnumerable
+        _ -> Left $ ExpectedEnumerable value
 
 -- | Execute parseFloat operation
 executeParseFloat :: State -> Either ProgramError State
 executeParseFloat state = do
     (value, state') <- popValue state
     case value of
-        String s ->
-            maybe 
+        StringValue s -> 
+            maybe
                 (Left $ NumberConversionError s)
                 (\f -> Right $ pushValue (FloatValue f) state')
-        _ -> Left $ ExpectedEnumerable
+                (readMaybe s)
+        _ -> Left $ ExpectedEnumerable value
 
 -- | Execute words operation
 executeWords :: State -> Either ProgramError State
