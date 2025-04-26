@@ -344,3 +344,24 @@ executeQuotationOrValue :: Value -> State -> Either ProgramError State
 executeQuotationOrValue value state = case value of
     QuotationValue tokens -> executeProgram tokens state >>= (\s, _) -> Right s
     _ -> Right $ pushValue value state
+
+-- | Execute times operation
+executeTimes :: State -> Either ProgramError State
+executeTimes state = do
+    (block, state1) <- popValue state
+    (countValue, state2) <- popValue state1
+    case countValue of
+        IntValue count ->
+            if count <= 0
+                then Right state 2
+                else case block of
+                    QuotationValue tokens -> execTimesIterative tokens count state2
+                    _ -> execTimesIterative [ValueToken block] count state2
+        _ -> Left $ ExpectedBoolOrNumber
+
+-- | Iterative implementation of times operation
+execTimesIterative :: [Token] -> Integer -> State -> Either ProgramError State
+execTimesIterative tokens count state =
+    let loop 0 s = Right s
+        loop n s = ExecuteProgram tokens s >>= \(s', _) -> loop (n-1) s'
+    in loop count state
