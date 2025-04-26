@@ -300,10 +300,21 @@ executeCons state = do
         _ -> Left $ ExpectedList list
 
 -- | Execute append operation
-executeAppend == State -> Either ProgramError State
+executeAppend :: State -> Either ProgramError State
 executeAppend state = do
     (list1, state1) <- popValue state
     (list2, state2) <- popValue state1
     case (list1, list2) of
         (ListValue xs, ListValue ys) -> Right $ pushValue (ListValue (ys ++ xs)) state2
         _ -> Left $ ExpectedList list2
+
+-- | Execute asisgnment operation (:=)
+executeAssignment :: State -> Either ProgramError State
+executeAssignment state = do
+    (value, state1) <- popValue state
+    (sumbolValue, state2) <- popValue state1
+    case symbolValue of
+        sumbolValue name ->
+            Right $ state2 { dictionary = Map.insert name value (dictionary state2) } -- Store value in dict
+        _ -> Left $ ExpectedVariable symbolName
+
