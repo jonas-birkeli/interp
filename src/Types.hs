@@ -46,8 +46,8 @@ type Dictionary = Map.Map String Value
 
 -- | The interpreter state
 data State = State
-  { dictionary :: Dictionary
-    , stack :: Stack
+  { dictionary :: Dictionary,
+    stack :: Stack
   }
 
 -- | Represents program execution errors
