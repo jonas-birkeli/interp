@@ -443,3 +443,16 @@ executeExec state = do
     case quotation of
         QuotationValue tokens -> executeProgram tokens state' >>= \(s, _) -> Right s
         _ -> Left $ ExpectedQuotation quotation
+
+-- | Execute print operation
+executePrint :: State -> Either ProgramError State
+executePrint state = do
+    (value, state') <- popValue state
+    -- Print to stdout? TODO
+    return state'
+
+-- | Execute read operation
+executeRead :: State -> Either ProgramError State
+executeRead state = do
+    -- Get from stdin? TODO
+    return $ psuhValue (StringValue "") state
