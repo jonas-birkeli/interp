@@ -1,4 +1,13 @@
-module Types where
+module Types 
+    (
+      State(..),
+      ProgramError(..),
+      ParseError(..),
+      Token(..),
+      Value(..),
+      Dictionary,
+      Stack
+    ) where
 
 import qualified Data.Map as Map
 
@@ -20,7 +29,7 @@ instance Show Value where
   show (BoolValue b) = show b
   show (StringValue s) = "\"" ++ s ++ "\""
   show (ListValue lv) = show lv
-  show (QuotationValue qv) = "{} " ++ unwords (map show qv) ++ " }"
+  show (QuotationValue qv) = "{ " ++ unwords (map show qv) ++ " }"
   show (SymbolValue sv) = sv
 
 -- | Tokens represent the parsed program
@@ -72,6 +81,8 @@ data ParseError
   | IncompleteList
   | IncompleteQuotation
   | UnknownToken String
+  | UnbalancedBraces
+  | UnbalancedBrackets
   deriving (Eq, Show)
 
 -- | Result type for interpreter operations

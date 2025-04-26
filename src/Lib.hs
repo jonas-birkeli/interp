@@ -1,41 +1,42 @@
 module Lib
-    ( someFunc
+    ( 
+        evalProgram,
+        runFile,
+        runREPL
     ) where
-    
+
+
 import Types
-import Parser
-import Interpreter
+    ( ParseError, ProgramError(..), State(stack), Stack, Token, Value )
+import Parser (parseProgram)
+import Interpreter (initialState, executeProgram)
 import System.IO (hFlush, stdout)
 import Data.List (intercalate)
-import Control.Monad (unless, void)
-import Data.Either (either)
-import Data.Functor ((<&>))
-import Control.Applicative ((<|>))
 
 -- | Placeholder function
 someFunc :: IO ()
-someFunc = putStrLn "Bprog Interpreter"
+someFunc = putStrLn "Stack Interpreter"
 
 -- | Evalutae a single line in the context for current state
 evalLine :: String -> State -> IO State
 evalLine line state = case parseProgram line of
   Left err -> do
     putStrLn $ "Parse error: " ++ show err
-    return state
+    return state  -- Return the original state
   Right tokens -> case executeProgram tokens state of
     Left err -> do
       putStrLn $ "Execution error: " ++ show err
-      return state
+      return state { stack = [] }  -- Clear stack on error
     Right (newState, result) -> do
       putStrLn $ "Result: " ++ show result
-      putStrLn $ "Stack: " ++ showStack (stack newState)
-      return newState
+      putStrLn $ "Stack: " ++ formatStack [result]  -- Show only the result
+      return newState { stack = [] }  -- Clear stack after command
 
 -- | Show execution result with stack info
 showExecutionResult :: (State, Value) -> IO ()
-showExecutionResult (newstate, result) = do
+showExecutionResult (newState, result) = do
     putStrLn $ "Result: " ++ show result 
-    putSTrLn $ "Stack: " ++ formatStack (stack newState)
+    putStrLn $ "Stack: " ++ formatStack (stack newState)
 
 -- | Formats stack for display
 formatStack :: Stack -> String
@@ -43,7 +44,7 @@ formatStack = ("[" ++ ) . (++ "]") . intercalate ", " . map show -- dotfree stac
 -- (++ "] <- function , ("[" ++) <- function
 
 -- | Handle parse errors
-handleParseError :: ParserError -> State -> IO State
+handleParseError :: ParseError -> State -> IO State
 handleParseError err state = do
     putStrLn $ "Parse error: " ++ show err
     pure state

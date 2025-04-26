@@ -1,11 +1,9 @@
 module Parser
     (  
         parseProgram,
-        tokenize,
-        Token(..)
     ) where
 
-import Types
+import Types (ParseError(..), Token(..), Value(..))
 import Data.Char (isDigit)
 import Text.Read (readMaybe)
 
@@ -43,7 +41,7 @@ parseQuotation (w:ws)
         (list, rest1) <- parseList ws
         (quotationTail, rest2) <- parseQuotation rest1
         return (ValueToken (ListValue list) : quotationTail, rest2)
-  | otherwise = do
+    | otherwise = do
         token <- parseToken w
         (quotationTail, rest) <- parseQuotation ws
         return (token : quotationTail, rest)
@@ -64,7 +62,7 @@ parseList (w:ws)
     | otherwise = do
         value <- parseValue w
         (listTail, rest) <- parseList ws
-        'return (value : listTail, rest)
+        return (value : listTail, rest)
 
 -- | Parse a single value - AI generated (Claude 3.7)
 parseValue :: String -> Either ParseError Value
@@ -76,7 +74,7 @@ parseValue ('"':rest) =
         else Left IncompleteString
 parseValue w
     | all isDigit w = Right $ IntValue $ read w
-    | all (\c -> isDigit c || c == '.' || c == '-') w && (w \= "-") && '.' `elem` w =
+    | all (\c -> isDigit c || c == '.' || c == '-') w && (w /= "-") && '.' `elem` w =
         case readMaybe w of
             Just n -> Right $ FloatValue n
             Nothing -> Left IncompleteString
@@ -87,7 +85,7 @@ parseValue w
     | otherwise = Right $ SymbolValue w
 
 -- | Parse a single token, wrap in OperatorToken
-parseToken :: String -> Either ParserError Token
+parseToken :: String -> Either ParseError Token
 parseToken "+" = Right $ OperatorToken "+"
 parseToken "-" = Right $ OperatorToken "-"
 parseToken "*" = Right $ OperatorToken "*"
@@ -119,7 +117,7 @@ parseToken "loop" = Right LoopToken
 parseToken "each" = Right EachToken
 parseToken "map" = Right MapToken
 parseToken "foldl" = Right FoldlToken
-parseToken "exec" = Rigth ExecToken
+parseToken "exec" = Right ExecToken
 parseToken ":=" = Right AssignmentToken
 parseToken "fun" = Right FunctionToken
 parseToken "True" = Right $ ValueToken (BoolValue True)
@@ -140,7 +138,7 @@ isNegativeNumber ('-':rest) = all isDigit rest || (all (\c -> isDigit c || c == 
 isNegativeNumber _ = False
 
 -- | Parse a negative number - AI generated (Claude 3.7)
-parseNegativeNumber :: String -> Either ParserError Token
+parseNegativeNumber :: String -> Either ParseError Token
 parseNegativeNumber ('-':rest)
     | all isDigit rest = Right $ ValueToken $ IntValue $ negate $ read rest
     | all (\c -> isDigit c || c == '.') rest && '.' `elem` rest =
@@ -154,7 +152,7 @@ isInteger :: String -> Bool
 isInteger = all isDigit
 
 -- | Parse an integer
-parseInt :: String -> Either ParserError Token
+parseInt :: String -> Either ParseError Token
 parseInt s = Right $ ValueToken $ IntValue $ read s
 
 -- | Check if a string is a float
@@ -162,7 +160,7 @@ isFloat :: String -> Bool
 isFloat s = all (\c -> isDigit c || c == '.') s && '.' `elem` s
 
 -- | Parse a float
-parseFloat :: String -> Either ParserError Token
+parseFloat :: String -> Either ParseError Token
 parseFloat s = case readMaybe s of
   Just n -> Right $ ValueToken $ FloatValue n
   Nothing -> Left $ UnknownToken s
@@ -173,7 +171,7 @@ isStringLiteral ('"':rest) = last rest == '"'
 isStringLiteral _ = False
 
 -- | Parse a string literal - AI generated (Claude 3.7)
-parseString :: String -> Either ParserError Token
+parseString :: String -> Either ParseError Token
 parseString ('"':rest) = 
     if last rest == '"'
         then Right $ ValueToken $ StringValue $ init rest

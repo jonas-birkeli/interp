@@ -1,10 +1,12 @@
 module Main (main) where
 
-import Lib
+import Types (State)
+import Lib (evalProgram, runFile, runREPL)
+import Interpreter (initialState)
 import System.Environment (getArgs)
 import System.Directory (doesFileExist)
 import Data.Maybe (fromMaybe)
-import Control.Monad.Extra (ifM)
+import Control.Monad.Extra (ifM, void)
 
 -- | The main entry point
 main :: IO ()
@@ -18,7 +20,7 @@ determineRunMode (filePath:_) = do
     fileExists <- doesFileExist filePath
     pure $ if fileExists
         then FileMode filePath
-        else InvalidFileMode filepath
+        else InvalidFileMode filePath
 
 -- | Execution modes for the interpeter
 data RunMode = ReplMode
@@ -27,7 +29,7 @@ data RunMode = ReplMode
 
 -- | Execute a particular run mode
 executeMode :: RunMode -> IO ()
-executemode ReplMode = startRepl
+executeMode ReplMode = startRepl
 executeMode (FileMode path) = runWithPrelude path
 executeMode (InvalidFileMode path) = handleInvalidFile path
 
@@ -35,7 +37,7 @@ executeMode (InvalidFileMode path) = handleInvalidFile path
 startRepl :: IO ()
 startRepl = do
     mapM_ putStrLn welcomeMessages
-    runRepl initialState -- TODO add this
+    runREPL initialState
 
 -- | Welcome messages for REPL mode
 welcomeMessages :: [String]
@@ -72,7 +74,9 @@ runWithPrelude filePath = do
 
 -- | Run a file with prelude if available
 runWithPrelude :: FilePath -> IO ()
-runWithPrelude filePath = loadPrelude >>= maybe (runfile filePath) (loadAndRunFile filePath) >>= void
+runWithPrelude filePath = void $ loadPrelude >>= maybe (runFile filePath) (loadAndRunFile filePath)
+
+
 
 {-
 -- | Load the prelude file if it exists
@@ -91,7 +95,7 @@ loadPrelude = do
 loadPrelude :: IO (Maybe (IO State))
 loadPrelude = ifM (doesFileExist "prelude.bprog") -- Monadic if-statementt :)
     (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.stack") -- Wrap in Just . because maybe
-    (pure Nothing) -- TODO make evalProgram
+    (pure Nothing)
 
 {-
 -- | Load and run a file with a state

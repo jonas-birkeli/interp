@@ -40,6 +40,8 @@ library
       base >=4.7 && <5
     , bytestring
     , containers
+    , directory
+    , extra
     , mtl
   default-language: Haskell2010
 
@@ -56,6 +58,8 @@ executable interpreter-exe
       base >=4.7 && <5
     , bytestring
     , containers
+    , directory
+    , extra
     , interpreter
     , mtl
   default-language: Haskell2010
@@ -74,6 +78,8 @@ test-suite interpreter-test
       base >=4.7 && <5
     , bytestring
     , containers
+    , directory
+    , extra
     , interpreter
     , mtl
   default-language: Haskell2010
