@@ -365,3 +365,28 @@ execTimesIterative tokens count state =
     let loop 0 s = Right s
         loop n s = ExecuteProgram tokens s >>= \(s', _) -> loop (n-1) s'
     in loop count state
+
+-- | Execute loop operation
+executeLoop :: State -> Either ProgramError State
+executeLoop state = do
+    (body, state1) <- popValue state
+    (condition, state2) <- popValue state1
+    (initial, state3) <- popValue state2
+    case (condition, body) of
+        (QuotationValue condTokens, QuotationValue bodyTokens) ->
+            executeLoopWithInitial initial condTokens bodyTokens state3
+        _ -> Left $ ExpectedQuotation conditional
+
+-- | Execute a loop with an initial value
+executeLoopWithInitial Value -> [Token] -> [Token] -> State -> Either ProgramError State
+executeLoopWithInitial initial condTokens bodyTokens state =
+    let state' = pushValue initial state
+        loop s = do
+            (condResult, s') <- executeProgram condTokens s
+            case condResult of
+                BoolValue True -> Right s'
+                BoolValue False -> do
+                    (s2, _) <- executeProgram bodyTokens s1
+                    loop s2
+                _ -> Left $ ExpectedBool condResult
+    in loop state'
