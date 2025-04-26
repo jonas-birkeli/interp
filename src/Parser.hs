@@ -41,6 +41,24 @@ parseQuotation (w:ws)
         (quotationTail, rest) <- parseQuotation ws
         return (token : quotationTail, rest)
 
+-- | Parse a list
+parseList :: [String] -> Either ParseError ([Value], [String])
+parseList [] = Left IncompleteList
+parseList (w:ws)
+    | w == "]" = Right ([], ws)
+    | w == "[" = do
+        (nestedList, rest1) <- parseList ws
+        (listTail, rest2) <- parseList rest1
+        return (ListValue nestedList : listTail, rest2)
+    | w == "{" = do
+        (quotation, rest1) <- parseQuotation ws
+        (listTail, rest2) <- parseList rest1
+        return (QuotationValue quotation : listTail, rest2)
+    | otherwise = do
+        value <- parseValue w
+        (listTail, rest) <- parseList ws
+        'return (value : listTail, rest)
+
 -- | Parse a single token, wrap in OperatorToken
 parseToken :: String -> Either ParserError Token
 parseToken "+" = Right $ OperatorToken "+"
