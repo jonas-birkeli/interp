@@ -4,7 +4,7 @@ module Interpreter
     ) where
 
 import Types
-import qualified Data.map as Map
+import qualified Data.Map as Map
 
 -- | Initial interpreter state
 initialState :: State
@@ -180,6 +180,7 @@ applyComparison op v1 v2 = case (v1, v2) of
 
 -- | Execute equality operations
 executeEquality :: State -> Either ProgramError
+executeEquality state = do
     (v1, v2, state') <- popTwoValues state
     let result = v1 == v2
     return $ pushValue (BoolValue result) state'
