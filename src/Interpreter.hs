@@ -5,6 +5,11 @@ module Interpreter
 
 import Types
 import qualified Data.Map as Map
+import Text.Read (readMaybe)
+import Control.Monad ((>=>), foldM)
+import Data.Either (either)
+import Data.Maybe (maybe)
+import Data.Bifunctor (first, second)
 
 -- | Initial interpreter state
 initialState :: State
