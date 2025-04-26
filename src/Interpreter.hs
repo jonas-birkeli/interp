@@ -435,3 +435,11 @@ applyEach item tokens state = do
     let state' = pushValue item state
     (resultState, _) <- executeProgram tokens state'
     return resultState
+
+-- | Execute exec operation
+executeExec :: State -> Either ProgramError State
+executeExec state = do
+    (quotation, state') <- popValue state
+    case quotation of
+        QuotationValue tokens -> executeProgram tokens state' >>= \(s, _) -> Right s
+        _ -> Left $ ExpectedQuotation quotation
