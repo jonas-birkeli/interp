@@ -416,3 +416,22 @@ mapListWithQuotation values tokens state =
     in finalStateWithItems >>= \s -> do
         items <- popValues (length values) s
         return $ pushValue (ListValue (reverse $ fst items)) (snd items)
+
+-- | Execute each opearation
+executeEach :: State -> Either ProgramError State
+executeEach state = do
+    (quotation, state1) <- popValue state
+    (list, state2) <- popValue state1
+    case (list, quotation) of
+        (ListValue values, QuotationValue tokens) ->
+            foldl (\s item -> s >>= applyEach item tokens) (Right state2) values
+        (ListValue values, _) -> 
+            foldl (\s item -> s >>= applyEach item [ValueToken quotation]) (Right state2) values
+        _ -> Left $ ExpectedList list
+
+-- | Apply each opeartion to a single item
+applyEach :: Value -> [Token] -> State -> Either ProgramError State
+applyEach item tokens state = do
+    let state' = pushValue item state
+    (resultState, _) <- executeProgram tokens state'
+    return resultState
