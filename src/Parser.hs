@@ -1,4 +1,9 @@
-module Parser where
+module Parser
+    (  
+        parseProgram,
+        tokenize,
+        Token(..)
+    ) where
 
 import Types
 import Data.Char (isDigit)

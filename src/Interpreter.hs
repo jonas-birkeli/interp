@@ -320,7 +320,7 @@ executeAssignment state = do
     (value, state1) <- popValue state
     (sumbolValue, state2) <- popValue state1
     case symbolValue of
-        sumbolValue name ->
+        SymbolValue name ->
             Right $ state2 { dictionary = Map.insert name value (dictionary state2) } -- Store value in dict
         _ -> Left $ ExpectedVariable symbolName
 
@@ -330,7 +330,7 @@ executeFunction state = do
     (quotation, state1) <- popValue state
     (symbolValue, state2) <- popValue state1
     case (quotation, symbolValue) of
-        (QuotationValue _, symbolValue name) -> 
+        (QuotationValue _, SymbolValue name) -> 
             Right $ state2 { dictionary = Map.insert name quotation (dictionary state2) }
         (_, _) -> Left $ ExpectedQuotation quotation
 
