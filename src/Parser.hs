@@ -1,6 +1,8 @@
 module Parser where
 
 import Types
+import Data.Char (isDigit)
+import Text.Read (readMaybe)
 
 -- | Parse a program string into a list of tokens
 parseProgram :: String -> Either ParseError [Token]
@@ -58,6 +60,26 @@ parseList (w:ws)
         value <- parseValue w
         (listTail, rest) <- parseList ws
         'return (value : listTail, rest)
+
+-- | Parse a single value - AI generated (Claude 3.7)
+parseValue :: String -> Either ParseError Value
+parseValue "True" = Right $ BoolValue True
+parseValue "False" = Right $ BoolValue False
+parseValue ('"':rest) =
+    if last rest == '"'
+        then Right $ StringValue $ init rest
+        else Left IncompleteString
+parseValue w
+    | all isDigit w = Right $ IntValue $ read w
+    | all (\c -> isDigit c || c == '.' || c == '-') w && (w \= "-") && '.' `elem` w =
+        case readMaybe w of
+            Just n -> Right $ FloatValue n
+            Nothing -> Left IncompleteString
+    | all (\c -> isDigit c || c == '-') w && (w /= "-") =
+        case readMaybe w of
+            Just n -> Right $ IntValue n
+            Nothing -> Left $ UnknownToken w
+    | otherwise = Right $ SymbolValue w
 
 -- | Parse a single token, wrap in OperatorToken
 parseToken :: String -> Either ParserError Token
