@@ -390,3 +390,29 @@ executeLoopWithInitial initial condTokens bodyTokens state =
                     loop s2
                 _ -> Left $ ExpectedBool condResult
     in loop state'
+
+-- | Execute map operation
+executeMap :: State -> Either ProgramError State
+executeMap state = do
+    (quotation, state1) <- popValue state
+    (list, state2) <- popValue state1
+    case (list, quotation) of
+        (ListValue values, QuotationValue tokens) ->
+            mapListWithQuotation values tokens state2
+        (ListValue values, _) ->
+            mapListWithQuotation values [ValueToken quotation] state2
+        _ -> Left $ ExpectedList list
+
+-- | Map list with a quotation
+mapListWithQuotation :: [Value] -> [Token] -> State -> Either ProgramError State
+mapListWithQuotation values tokens state = 
+    let mapItem acc item = do
+        state1 <- acc
+        let state2 = pushValue item state1
+        (resultState, result) <- executeProgram tokens state2
+        return $ pushValue result $ resultState { stack = tail (stack resultState) }
+
+        finalStateWithItems = foldl mapItem (Right state) values
+    in finalStateWithItems >>= \s -> do
+        items <- popValues (length values) s
+        return $ pushValue (ListValue (reverse $ fst items)) (snd items)
