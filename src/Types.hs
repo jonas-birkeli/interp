@@ -36,7 +36,7 @@ data Token
   | FoldlToken
   | EachToken
   | ExecToken
-  derivinc (Eq, Show)
+  deriving (Eq, Show)
 
 -- | The stack is a list of values
 type Stack = [Value]
