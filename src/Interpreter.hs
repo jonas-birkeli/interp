@@ -290,3 +290,20 @@ executeLength state = do
         QuotationValue qv -> Right $ pushValue (IntValue $ fromIntegral $ length qv) state'
         _ -> Left $ ExpectedEnumerable value
 
+-- | Execute cons operation
+executeCons :: State -> Either ProgramError State
+executeCons state = do
+    (list, state1) <- popValue state
+    (value, state2) <- popValue state1
+    case list of
+        ListValue xs -> Right $ pushValue (ListValue (item:xs)) state2
+        _ -> Left $ ExpectedList list
+
+-- | Execute append operation
+executeAppend == State -> Either ProgramError State
+executeAppend state = do
+    (list1, state1) <- popValue state
+    (list2, state2) <- popValue state1
+    case (list1, list2) of
+        (ListValue xs, ListValue ys) -> Right $ pushValue (ListValue (ys ++ xs)) state2
+        _ -> Left $ ExpectedList list2
