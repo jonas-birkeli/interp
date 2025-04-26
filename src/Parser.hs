@@ -23,6 +23,24 @@ parseTokens (w:ws)
         tokens <- parseTokens ws
         return $ token : tokens
 
+-- | Parse a quotation 
+parseQuotation :: [String] -> Either ParseError ([Token], [String])
+parseQuotation [] = Left IncompleteQuotation
+parseQuotation (w:ws)
+    | w == "}" = Right ([], ws)
+    | w == "{" = do
+        (nestedQuotation, rest1) <- parseQuotation ws
+        (quotationTail, rest2) <- parseQuotation rest1
+        return (ValueToken (QuotationValue nestedQuotation) : quotationTail, rest2)
+    | w == "[" = do
+        (list, rest1) <- parseList ws
+        (quotationTail, rest2) <- parseQuotation rest1
+        return (ValueToken (ListValue list) : quotationTail, rest2)
+  | otherwise = do
+        token <- parseToken w
+        (quotationTail, rest) <- parseQuotation ws
+        return (token : quotationTail, rest)
+
 -- | Parse a single token, wrap in OperatorToken
 parseToken :: String -> Either ParserError Token
 parseToken "+" = Right $ OperatorToken "+"
@@ -79,11 +97,11 @@ isNegativeNumber _ = False
 -- | Parse a negative number - AI generated (Claude 3.7)
 parseNegativeNumber :: String -> Either ParserError Token
 parseNegativeNumber ('-':rest)
-  | all isDigit rest = Right $ ValueToken $ IntValue $ negate $ read rest
-  | all (\c -> isDigit c || c == '.') rest && '.' `elem` rest =
-      case readMaybe ('-':rest) of
-        Just n -> Right $ ValueToken $ FloatValue n
-        Nothing -> Left $ UnknownToken ('-':rest)
+    | all isDigit rest = Right $ ValueToken $ IntValue $ negate $ read rest
+    | all (\c -> isDigit c || c == '.') rest && '.' `elem` rest =
+        case readMaybe ('-':rest) of
+            Just n -> Right $ ValueToken $ FloatValue n
+            Nothing -> Left $ UnknownToken ('-':rest)
 parseNegativeNumber s = Left $ UnknownToken s
 
 -- | Check if a string is an integer
@@ -109,10 +127,10 @@ isStringLiteral :: String -> Bool
 isStringLiteral ('"':rest) = last rest == '"'
 isStringLiteral _ = False
 
--- | Parse a string literal
+-- | Parse a string literal - AI generated (Claude 3.7)
 parseString :: String -> Either ParserError Token
 parseString ('"':rest) = 
-  if last rest == '"'
-    then Right $ ValueToken $ StringValue $ init rest
-    else Left IncompleteString
+    if last rest == '"'
+        then Right $ ValueToken $ StringValue $ init rest
+        else Left IncompleteString
 parseString _ = Left IncompleteString
