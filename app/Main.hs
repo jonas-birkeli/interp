@@ -90,7 +90,7 @@ loadPrelude = do
 -- | Load the prelude file if it exists
 loadPrelude :: IO (Maybe (IO State))
 loadPrelude = ifM (doesFileExist "prelude.bprog") -- Monadic if-statementt :)
-    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.bprog") -- Wrap in Just . because maybe
+    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.stack") -- Wrap in Just . because maybe
     (pure Nothing) -- TODO make evalProgram
 
 {-

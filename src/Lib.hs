@@ -79,7 +79,7 @@ runREPL state = do
 -- | Display the REPL prompt
 promptForInput :: IO ()
 promptForInput = do
-    putStrLn "bprog> "
+    putStrLn "stack> "
     hFlush stdout
 
 -- | Run a program from a file
