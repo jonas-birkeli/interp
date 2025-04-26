@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 module Interpreter
     ( executeProgram
     , initialState
@@ -348,7 +349,7 @@ executeIf state = do
 -- | Execute a quotation or a direct value
 executeQuotationOrValue :: Value -> State -> Either ProgramError State
 executeQuotationOrValue value state = case value of
-    QuotationValue tokens -> executeProgram tokens state >>= (\s, _) -> Right s
+    QuotationValue tokens -> executeProgram tokens state >>= (\(s, _) -> Right s)
     _ -> Right $ pushValue value state
 
 -- | Execute times operation
@@ -384,7 +385,7 @@ executeLoop state = do
         _ -> Left $ ExpectedQuotation conditional
 
 -- | Execute a loop with an initial value
-executeLoopWithInitial Value -> [Token] -> [Token] -> State -> Either ProgramError State
+executeLoopWithInitial :: Value -> [Token] -> [Token] -> State -> Either ProgramError State
 executeLoopWithInitial initial condTokens bodyTokens state =
     let state' = pushValue initial state
         loop s = do
@@ -409,15 +410,15 @@ executeMap state = do
             mapListWithQuotation values [ValueToken quotation] state2
         _ -> Left $ ExpectedList list
 
--- | Map list with a quotation
+-- | Map a list with a quotation
 mapListWithQuotation :: [Value] -> [Token] -> State -> Either ProgramError State
 mapListWithQuotation values tokens state = 
     let mapItem acc item = do
-        state1 <- acc
-        let state2 = pushValue item state1
-        (resultState, result) <- executeProgram tokens state2
-        return $ pushValue result $ resultState { stack = tail (stack resultState) }
-
+            state' <- acc
+            let state'' = pushValue item state'
+            (resultState, result) <- executeProgram tokens state''
+            return $ pushValue result $ resultState { stack = tail (stack resultState) }
+      
         finalStateWithItems = foldl mapItem (Right state) values
     in finalStateWithItems >>= \s -> do
         items <- popValues (length values) s

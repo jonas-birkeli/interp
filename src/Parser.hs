@@ -17,7 +17,7 @@ parseProgram input = parseTokens $ words input
 parseTokens :: [String] -> Either ParseError [Token]
 parseTokens [] = Right []
 parseTokens (w:ws)
-    | w == "{" do
+    | w == "{" = do
         (quotation, rest) <- parseQuotation ws
         tokens <- parseTokens rest -- Recursive
         return $ ValueToken (QuotationValue quotation) : tokens

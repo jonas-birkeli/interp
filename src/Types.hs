@@ -67,7 +67,7 @@ data ProgramError
   deriving (Eq, Show)
 
 -- | Represents parser errors
-data ParserError
+data ParseError
   = IncompleteString
   | IncompleteList
   | IncompleteQuotation

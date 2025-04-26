@@ -3,7 +3,7 @@ module Lib
     ) where
     
 import Types
-import Control.Monad.State (State)
+import Control.Monad.State (State as MonadState)
 import Control.Monad.RWS (MonadState(state))
 import GHC.IO.FD (stdout)
 import Data.ByteString (fromFilePath)
@@ -14,6 +14,18 @@ someFunc = putStrLn "Bprog Interpreter"
 
 -- | Evalutae a single line in the context for current state
 evalLine :: String -> State -> IO State
+evalLine line state = case parseProgram line of
+  Left err -> do
+    putStrLn $ "Parse error: " ++ show err
+    return state
+  Right tokens -> case executeProgram tokens state of
+    Left err -> do
+      putStrLn $ "Execution error: " ++ show err
+      return state
+    Right (newState, result) -> do
+      putStrLn $ "Result: " ++ show result
+      putStrLn $ "Stack: " ++ showStack (stack newState)
+      return newState
 
 -- | Show execution result with stack info
 showExecutionResult :: (State, Value) -> IO ()
