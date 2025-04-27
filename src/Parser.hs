@@ -6,6 +6,7 @@ module Parser
 import Types (ParseError(..), Token(..), Value(..))
 import Data.Char (isDigit)
 import Text.Read (readMaybe)
+import Control.Monad (guard)
 
 -- | Parse a program string into a list of tokens
 parseProgram :: String -> Either ParseError [Token]
@@ -167,13 +168,25 @@ parseFloat s = case readMaybe s of
 
 -- | Check if a string is a string literal
 isStringLiteral :: String -> Bool
-isStringLiteral ('"':rest) = last rest == '"'
+isStringLiteral ('"':rest) = not (null rest) && last rest == '"'
 isStringLiteral _ = False
 
--- | Parse a string literal - AI generated (Claude 3.7)
+-- | Parse a string literal using applicative style
 parseString :: String -> Either ParseError Token
-parseString ('"':rest) = 
-    if last rest == '"'
-        then Right $ ValueToken $ StringValue $ init rest
-        else Left IncompleteString
-parseString _ = Left IncompleteString
+parseString input = case input of
+  ('"':xs) -> do
+    content <- maybeToEither IncompleteString $ stripQuotation xs
+    pure $ ValueToken $ StringValue content
+  _ -> Left IncompleteString
+  where
+    -- Convert a Maybe to Either with a default error
+    maybeToEither :: ParseError -> Maybe a -> Either ParseError a
+    maybeToEither err Nothing = Left err
+    maybeToEither _ (Just x) = Right x
+    
+    -- Safe function to strip the closing quotation
+    stripQuotation :: String -> Maybe String
+    stripQuotation s = do
+      guard (not $ null s)
+      guard (last s == '"')
+      pure $ init s
