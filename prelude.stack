@@ -13,3 +13,73 @@ double { 2 * } fun
 
 {-- Square a number --}
 square { dup * } fun
+
+{-- Checks if number is odd --}
+odd { dup 2 div swap 2 / == if False True } fun
+
+{-- Chekcs if number is even --}
+even { odd not } fun
+
+{-- Factorial implementation --}
+factorial {
+    dup 0 if
+    { pop 1 }
+    { dup 1 - factorial * }
+} fun
+
+{-- Generate a list from 1 to n --}
+range {
+    [ ] swap
+    dup 0 >
+    loop { dup 0 > } {
+        dup
+        -rot cons
+        swap 1 - swap
+    }
+    pop
+} fun
+
+{-- Sum a list of numbers --}
+sum { 0 foldl + } fun
+
+{-- Max between two values --}
+max { dup2 > if swap pop pop } fun
+
+{-- Min between two values --}
+min { dup2 < if swap pop pop } fun
+
+{-- Duplicate the top 2 values --}
+dup2 { swap dup -rot dup -rot } fun
+
+{-- Rotate top 3 valuess: a b c -> b c a --}
+rot { -rot swap } fun
+
+{-- Reverse rotate top 3 values: a b c -> c a b --}
+-rot { swap rot } fun
+
+{-- Print with newline --}
+println { print } fun
+
+{-- Print without newline --}
+write { print } fun
+
+{-- Boolean negation --}
+
+{-- Create a list with n copies of value --}
+replicate { swap range map pop } fun
+
+{-- Apply a function n times to a value --}
+iterate { swap range pop swap dup2 times swap pop } fun
+
+{-- Join a list of strings into a single string --}
+join {
+    swap dup empty if
+    { pop pop "" }
+    { swap }
+} fun
+
+{-- Convert a list to string representation --}
+toString { dup dup } fun
+
+{-- Identity function --}
+id { } fun
