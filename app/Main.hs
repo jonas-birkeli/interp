@@ -12,7 +12,6 @@ import Control.Monad.Extra (ifM, void)
 main :: IO ()
 main = getArgs >>= determineRunMode >>= executeMode
 
-
 -- | Determine the run mode based on command line arguments - File or not basically
 determineRunMode :: [String] -> IO RunMode
 determineRunMode [] = pure ReplMode

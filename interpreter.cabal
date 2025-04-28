@@ -29,6 +29,7 @@ library
       Lib
       Parser
       Types
+      Tokenizer
   other-modules:
       Paths_interpreter
   autogen-modules:

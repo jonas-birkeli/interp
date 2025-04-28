@@ -4,12 +4,13 @@ module Parser
     ) where
 
 import Types (ParseError(..), Token(..), Value(..))
+import Tokenizer (tokenize)
 import Data.Char (isDigit)
 import Text.Read (readMaybe)
 
 -- | Parse a program string into a list of tokens
 parseProgram :: String -> Either ParseError [Token]
-parseProgram input = parseTokens $ words input
+parseProgram input = parseTokens $ tokenize input
 
 -- | Parse a list of words into tokens
 parseTokens :: [String] -> Either ParseError [Token]
@@ -64,12 +65,12 @@ parseList (w:ws)
         (listTail, rest) <- parseList ws
         return (value : listTail, rest)
 
--- | Parse a single value - AI generated (Claude 3.7)
+-- | Parse a single value
 parseValue :: String -> Either ParseError Value
 parseValue "True" = Right $ BoolValue True
 parseValue "False" = Right $ BoolValue False
-parseValue ('"':rest) =
-    if last rest == '"'
+parseValue s@('"':rest) =
+    if not (null rest) && last rest == '"'
         then Right $ StringValue $ init rest
         else Left IncompleteString
 parseValue w
@@ -137,7 +138,7 @@ isNegativeNumber :: String -> Bool
 isNegativeNumber ('-':rest) = all isDigit rest || (all (\c -> isDigit c || c == '.') rest && '.' `elem` rest)
 isNegativeNumber _ = False
 
--- | Parse a negative number - AI generated (Claude 3.7)
+-- | Parse a negative number
 parseNegativeNumber :: String -> Either ParseError Token
 parseNegativeNumber ('-':rest)
     | all isDigit rest = Right $ ValueToken $ IntValue $ negate $ read rest
@@ -167,13 +168,13 @@ parseFloat s = case readMaybe s of
 
 -- | Check if a string is a string literal
 isStringLiteral :: String -> Bool
-isStringLiteral ('"':rest) = last rest == '"'
+isStringLiteral ('"':rest) = not (null rest) && last rest == '"'
 isStringLiteral _ = False
 
--- | Parse a string literal - AI generated (Claude 3.7)
+-- | Parse a string literal
 parseString :: String -> Either ParseError Token
 parseString ('"':rest) = 
-    if last rest == '"'
+    if not (null rest) && last rest == '"'
         then Right $ ValueToken $ StringValue $ init rest
         else Left IncompleteString
 parseString _ = Left IncompleteString

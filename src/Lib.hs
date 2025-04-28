@@ -4,12 +4,10 @@ module Lib
         runFile,
         runREPL
     ) where
-
-
 import Types
-    ( ParseError, ProgramError(..), State(stack), Stack, Token, Value )
+    ( ParseError, ProgramError(..), State(stack), Stack, Token(..), Value )
 import Parser (parseProgram)
-import Interpreter (initialState, executeProgram)
+import Interpreter (initialState, executeProgram, executeTokenStream)
 import System.IO (hFlush, stdout)
 import Data.List (intercalate)
 
@@ -20,17 +18,17 @@ someFunc = putStrLn "Stack Interpreter"
 -- | Evalutae a single line in the context for current state
 evalLine :: String -> State -> IO State
 evalLine line state = case parseProgram line of
-  Left err -> do
-    putStrLn $ "Parse error: " ++ show err
-    return state  -- Return the original state
-  Right tokens -> case executeProgram tokens state of
     Left err -> do
-      putStrLn $ "Execution error: " ++ show err
-      return state { stack = [] }  -- Clear stack on error
-    Right (newState, result) -> do
-      putStrLn $ "Result: " ++ show result
-      putStrLn $ "Stack: " ++ formatStack [result]  -- Show only the result
-      return newState { stack = [] }  -- Clear stack after command
+        putStrLn $ "Parse error: " ++ show err
+        return state
+    Right tokens -> do
+        case executeTokenStream tokens state of
+            Left err -> do
+                putStrLn $ "Execution error: " ++ show err
+                return state
+            Right (newState, _) -> do
+                putStrLn $ "Stack: " ++ formatStack (stack newState)
+                return newState
 
 -- | Show execution result with stack info
 showExecutionResult :: (State, Value) -> IO ()
@@ -41,7 +39,6 @@ showExecutionResult (newState, result) = do
 -- | Formats stack for display
 formatStack :: Stack -> String
 formatStack = ("[" ++ ) . (++ "]") . intercalate ", " . map show -- dotfree stack
--- (++ "] <- function , ("[" ++) <- function
 
 -- | Handle parse errors
 handleParseError :: ParseError -> State -> IO State
@@ -83,6 +80,9 @@ processReplInput input state
     | input `elem` [":q", ":quit"] = do
         putStrLn "Bye!"
         pure Nothing
+    | input == ":clear" = do
+        putStrLn "Stack cleared."
+        pure $ Just state { stack = [] }
     | otherwise = Just <$> evalLine input state
 
 -- | Run the REPL (Read-Eval-Print Loop)
@@ -96,7 +96,7 @@ runREPL state = do
 -- | Display the REPL prompt
 promptForInput :: IO ()
 promptForInput = do
-    putStrLn "stack> "
+    putStr "stack> "
     hFlush stdout
 
 -- | Run a program from a file
