@@ -51,7 +51,7 @@ executeTokenStream (token:tokens) state =
 -- | Execute a single token with a given state
 executeToken :: Token -> State -> Either ProgramError State
 executeToken token s = case token of
-    ValueToken value -> Right (pushValue value s)
+    ValueToken value -> executeValue value s
     OperatorToken op -> executeOperator op s
     AssignmentToken -> executeAssignment s
     FunctionToken -> executeFunction s
@@ -307,7 +307,7 @@ executeSwap :: State -> Either ProgramError State
 executeSwap state = do
     (v1, state1) <- popValue state
     (v2, state2) <- popValue state1
-    return $ pushValue v1 $ pushValue v2 state2
+    return $ pushValue v2 $ pushValue v1 state2
 
 -- | Execute pop operation (remove top value)
 executePop :: State -> Either ProgramError State
