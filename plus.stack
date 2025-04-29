@@ -1,1 +1,6 @@
-3 4 +
+0 1         
+10 loop
+  { dup 0 == }  
+  { swap dup rot +    
+    swap 1 - 
+  }
