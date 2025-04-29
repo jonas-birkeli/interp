@@ -51,7 +51,7 @@ executeTokenStream (token:tokens) state =
 -- | Execute a single token with a given state
 executeToken :: Token -> State -> Either ProgramError State
 executeToken token s = case token of
-    ValueToken value -> executeValue value s
+    ValueToken value -> Right (pushValue value s)
     OperatorToken op -> executeOperator op s
     AssignmentToken -> executeAssignment s
     FunctionToken -> executeFunction s
@@ -299,8 +299,8 @@ executeNot state = do
 -- | Execute dup operation (duplicate top value)
 executeDup :: State -> Either ProgramError State
 executeDup state = do
-    (value, _) <- popValue state
-    return $ pushValue value $ pushValue value state
+    (value, state') <- popValue state
+    return $ pushValue value $ pushValue value state'
 
 -- | Execute swap operations (swap top two values)
 executeSwap :: State -> Either ProgramError State
