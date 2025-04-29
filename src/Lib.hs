@@ -30,7 +30,7 @@ evalLine line state = case parseProgram line of
 showExecutionResult :: (State, Value) -> IO ()
 showExecutionResult (newState, result) = do
     putStrLn $ "Result: " ++ show result 
-    putStrLn $ "Stack: " ++ formatStack (stack newState)
+    -- putStrLn $ "Stack: " ++ formatStack (stack newState)
 
 -- | Formats stack for display
 formatStack :: Stack -> String
@@ -79,6 +79,9 @@ processReplInput input state
     | input == ":clear" = do
         putStrLn "Stack cleared."
         pure $ Just state { stack = [] }
+    | input == ":stack" = do
+        putStrLn $ "Stack: " ++ formatStack ( stack state )
+        pure $ Just state
     | otherwise = Just <$> evalLine input state
 
 -- | Run the REPL (Read-Eval-Print Loop)

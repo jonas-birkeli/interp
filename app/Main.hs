@@ -42,8 +42,13 @@ startRepl = do
 welcomeMessages :: [String]
 welcomeMessages = 
     [ 
+        "",
         "You have now entered REPL mode",
-        "Enter ':q' or ':quit' to exit."
+        "Commands: ",
+        "':stack' to show stack",
+        "':clear' to clear stack",
+        "':q' or ':quit' to exit.",
+        ""
     ]
 
 -- | Handle an invalid file path
