@@ -11,10 +11,6 @@ import Interpreter (initialState, executeProgram, executeTokenStream)
 import System.IO (hFlush, stdout)
 import Data.List (intercalate)
 
--- | Placeholder function
-someFunc :: IO ()
-someFunc = putStrLn "Stack Interpreter"
-
 -- | Evalutae a single line in the context for current state
 evalLine :: String -> State -> IO State
 evalLine line state = case parseProgram line of
@@ -96,7 +92,7 @@ runREPL state = do
 -- | Display the REPL prompt
 promptForInput :: IO ()
 promptForInput = do
-    putStr "stack> "
+    putStr "interp> "
     hFlush stdout
 
 -- | Run a program from a file

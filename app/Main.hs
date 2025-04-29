@@ -66,8 +66,8 @@ runWithPrelude filePath = void $ loadPrelude >>= maybe (runFile filePath) (loadA
 
 -- | Load the prelude file if it exists
 loadPrelude :: IO (Maybe (IO State))
-loadPrelude = ifM (doesFileExist "prelude.bprog") -- Monadic if-statementt :)
-    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.stack") -- Wrap in Just . because maybe
+loadPrelude = ifM (doesFileExist "prelude.i") -- Monadic if-statementt :)
+    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.in") -- Wrap in Just . because maybe
     (pure Nothing)
 
 -- | Load and run file with a state

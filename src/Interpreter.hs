@@ -152,7 +152,7 @@ executeLoop tokens state = do
 -- | Execute a loop with specified components
 executeLoopWithComponents :: Value -> [Token] -> [Token] -> State -> Either ProgramError State
 executeLoopWithComponents initial condTokens bodyTokens initState =
-    let initialState = pushValue initial initState
+    let initialState' = pushValue initial initState
         loop currentState = do
             -- Execute the condition and check top of stack
             (condState, _) <- executeTokenStream condTokens currentState
@@ -169,7 +169,7 @@ executeLoopWithComponents initial condTokens bodyTokens initState =
                     Left (ExpectedBool invalidValue)
                 [] ->
                     Left StackEmpty
-    in loop initialState
+    in loop initialState'
 
 -- | Push a value onto the stack
 pushValue :: Value -> State -> State
@@ -459,18 +459,23 @@ executeMap state = do
 
 -- | Map a list with a quotation
 mapListWithQuotation :: [Value] -> [Token] -> State -> Either ProgramError State
-mapListWithQuotation values tokens state =
-    let mapItem acc item = do
-            state' <- acc
-            let state'' = pushValue item state'
-            (resultState, _) <- executeTokenStream tokens state''
-            case stack resultState of
-                (result:_) -> Right $ state' { stack = result : stack state' }
-                [] -> Left StackEmpty
-        finalStateWithItems = foldM (\s item -> mapItem (Right s) item) state values
-    in finalStateWithItems >>= \s -> do
-        items <- popValues (length values) s
-        return $ pushValue (ListValue (reverse $ fst items)) (snd items)
+mapListWithQuotation values tokens state = do
+    -- Process each value in the list, collecting results
+    results <- mapM (applyToItem tokens state) values
+    -- Push the list of results onto the stack
+    return $ pushValue (ListValue results) state
+
+-- | Apply function to a single item
+applyToItem :: [Token] -> State -> Value -> Either ProgramError Value
+applyToItem tokens state item = do
+    -- Push item onto a clean state (starting with original state but empty stack)
+    let itemState = pushValue item state { stack = [] }
+    -- Execute the tokens on this state
+    (resultState, _) <- executeTokenStream tokens itemState
+    -- Get the result from the top of the stack
+    case stack resultState of
+        (result:_) -> Right result
+        [] -> Left StackEmpty
 
 -- | Execute each operation
 executeEach :: State -> Either ProgramError State
