@@ -4,13 +4,14 @@ module Parser
     ) where
 
 import Types (ParseError(..), Token(..), Value(..))
+import Tokenizer (tokenize)
 import Data.Char (isDigit)
 import Text.Read (readMaybe)
 import Control.Monad (guard)
 
 -- | Parse a program string into a list of tokens
 parseProgram :: String -> Either ParseError [Token]
-parseProgram input = parseTokens $ words input
+parseProgram input = parseTokens $ tokenize input
 
 -- | Parse a list of words into tokens
 parseTokens :: [String] -> Either ParseError [Token]
@@ -65,12 +66,12 @@ parseList (w:ws)
         (listTail, rest) <- parseList ws
         return (value : listTail, rest)
 
--- | Parse a single value - AI generated (Claude 3.7)
+-- | Parse a single value
 parseValue :: String -> Either ParseError Value
 parseValue "True" = Right $ BoolValue True
 parseValue "False" = Right $ BoolValue False
-parseValue ('"':rest) =
-    if last rest == '"'
+parseValue s@('"':rest) =
+    if not (null rest) && last rest == '"'
         then Right $ StringValue $ init rest
         else Left IncompleteString
 parseValue w
@@ -138,7 +139,7 @@ isNegativeNumber :: String -> Bool
 isNegativeNumber ('-':rest) = all isDigit rest || (all (\c -> isDigit c || c == '.') rest && '.' `elem` rest)
 isNegativeNumber _ = False
 
--- | Parse a negative number - AI generated (Claude 3.7)
+-- | Parse a negative number
 parseNegativeNumber :: String -> Either ParseError Token
 parseNegativeNumber ('-':rest)
     | all isDigit rest = Right $ ValueToken $ IntValue $ negate $ read rest
@@ -171,22 +172,10 @@ isStringLiteral :: String -> Bool
 isStringLiteral ('"':rest) = not (null rest) && last rest == '"'
 isStringLiteral _ = False
 
--- | Parse a string literal using applicative style
+-- | Parse a string literal
 parseString :: String -> Either ParseError Token
-parseString input = case input of
-  ('"':xs) -> do
-    content <- maybeToEither IncompleteString $ stripQuotation xs
-    pure $ ValueToken $ StringValue content
-  _ -> Left IncompleteString
-  where
-    -- Convert a Maybe to Either with a default error
-    maybeToEither :: ParseError -> Maybe a -> Either ParseError a
-    maybeToEither err Nothing = Left err
-    maybeToEither _ (Just x) = Right x
-    
-    -- Safe function to strip the closing quotation
-    stripQuotation :: String -> Maybe String
-    stripQuotation s = do
-      guard (not $ null s)
-      guard (last s == '"')
-      pure $ init s
+parseString ('"':rest) = 
+    if not (null rest) && last rest == '"'
+        then Right $ ValueToken $ StringValue $ init rest
+        else Left IncompleteString
+parseString _ = Left IncompleteString

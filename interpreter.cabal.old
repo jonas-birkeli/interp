@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -28,8 +28,8 @@ library
       Interpreter
       Lib
       Parser
-      Tokenizer
       Types
+      Tokenizer
   other-modules:
       Paths_interpreter
   autogen-modules:

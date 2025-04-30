@@ -12,7 +12,6 @@ import Control.Monad.Extra (ifM, void)
 main :: IO ()
 main = getArgs >>= determineRunMode >>= executeMode
 
-
 -- | Determine the run mode based on command line arguments - File or not basically
 determineRunMode :: [String] -> IO RunMode
 determineRunMode [] = pure ReplMode
@@ -43,8 +42,13 @@ startRepl = do
 welcomeMessages :: [String]
 welcomeMessages = 
     [ 
+        "",
         "You have now entered REPL mode",
-        "Enter ':q' or ':quit' to exit."
+        "Commands: ",
+        "':stack' to show stack",
+        "':clear' to clear stack",
+        "':q' or ':quit' to exit.",
+        ""
     ]
 
 -- | Handle an invalid file path
@@ -61,50 +65,15 @@ invalidFileMessages path =
         "Starting REPL mode instead"
     ]
 
-{-
--- | Run a file with prelude if available
-runWithPrelude :: FilePath -> IO ()
-runWithPrelude filePath = do
-    maybePreludeState <- loadPrelude
-    finalState <- fromMaybe (runFile filePath) $ do
-        preludeState <- maybePreludeState
-        pure $ loadAndRunFile filePath preludeState
-    void finalState
-    -}
-
 -- | Run a file with prelude if available
 runWithPrelude :: FilePath -> IO ()
 runWithPrelude filePath = void $ loadPrelude >>= maybe (runFile filePath) (loadAndRunFile filePath)
 
-
-
-{-
 -- | Load the prelude file if it exists
 loadPrelude :: IO (Maybe (IO State))
-loadPrelude = do
-    preludeExists <- doesFileExist "prelude.bprog"
-    if preludeExists
-        then do
-            putStrLn "Loading prelude..."
-            prelude <- readFile "prelude.bprog"
-            pure $ Just $ evalProgram prelude initialState -- TODO make evalProgram
-        else pure Nothing
-    -}
-
--- | Load the prelude file if it exists
-loadPrelude :: IO (Maybe (IO State))
-loadPrelude = ifM (doesFileExist "prelude.bprog") -- Monadic if-statementt :)
-    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.stack") -- Wrap in Just . because maybe
+loadPrelude = ifM (doesFileExist "prelude.i") -- Monadic if-statementt :)
+    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.in") -- Wrap in Just . because maybe
     (pure Nothing)
-
-{-
--- | Load and run a file with a state
-loadAndRunFile :: FilePath -> IO State -> IO State
-loadAndRunFile filePath getInitialState = do
-    initialState <- getInitialState 
-    program <- readFile filePath
-    evalProgram program initialState
-    -}
 
 -- | Load and run file with a state
 loadAndRunFile :: FilePath -> IO State -> IO State
