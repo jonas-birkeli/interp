@@ -34,6 +34,17 @@ instance Show Value where
 
 -- | Helper function to show tokens in a nice way
 showToken :: Token -> String
+showToken (ValueToken v) = show v
+showToken (OperatorToken op) = op
+showToken AssignmentToken = ":="
+showToken FunctionToken = "fun"
+showToken IfToken = "if"
+showToken TimesToken = "times"
+showToken LoopToken = "loop"
+showToken MapToken = "map"
+showToken FoldlToken = "foldl"
+showToken EachToken = "each"
+showToken ExecToken = "exec"
 
 -- | Tokens represent the parsed program
 data Token
