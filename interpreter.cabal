@@ -30,7 +30,6 @@ library
       Interpreter.Comparison
       Interpreter.Control
       Interpreter.Core
-      Interpreter.Execution
       Interpreter.HigherOrder
       Interpreter.IO
       Interpreter.List

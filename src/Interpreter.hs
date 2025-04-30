@@ -15,8 +15,8 @@ module Interpreter
     , module Interpreter.Variables
     ) where
 
-import Interpreter.Core (executeProgram, executeTokenStream)
-import Interpreter.State (initialState)
+import Interpreter.Core
+import Interpreter.State 
 import Interpreter.Arithmetic
 import Interpreter.Comparison
 import Interpreter.Control

@@ -5,11 +5,11 @@ module Lib
         runREPL
     ) where
 
-import Types (ParseError, ProgramError(..), State(stack, printBuffer), Stack, Token(..), Value)
-import Parser (parseProgram)
-import Interpreter (initialState, executeProgram, executeTokenStream)
-import System.IO (hFlush, stdout)
-import Data.List (intercalate)
+import Types
+import Parser
+import Interpreter
+import System.IO
+import Data.List
 
 -- | Evalutae a single line in the context for current state
 evalLine :: String -> State -> IO State

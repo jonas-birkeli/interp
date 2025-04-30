@@ -12,9 +12,9 @@ module Interpreter.HigherOrder
     ) where
 
 import Types
-import Interpreter.Stack (pushValue, popValue)
+import Interpreter.Stack
 import Interpreter.TokenExecution
-import Control.Monad (foldM)
+import Control.Monad 
 import qualified Data.Map as Map
 
 -- | Apply each operation to a single item

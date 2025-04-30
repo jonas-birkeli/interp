@@ -10,7 +10,7 @@ module Interpreter.Stack
     ) where
 
 import Types
-import Control.Monad ((>=>))
+import Control.Monad
 
 -- | Push a value onto the stack
 pushValue :: Value -> State -> State

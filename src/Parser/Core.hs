@@ -6,9 +6,9 @@ module Parser.Core
         parseList
     ) where
 
-import Types (ParseError(..), Token(..), Value(..))
-import Parser.Tokenizer (tokenize)
-import Parser.Value (parseValue, parseToken)
+import Types
+import Parser.Tokenizer
+import Parser.Value
 
 -- | Parse a program string into a list of tokens
 parseProgram :: String -> Either ParseError [Token]

@@ -8,7 +8,7 @@ module Interpreter.TokenExecution
         executeExec
     ) where
 
-import Types (Token(..), State, ProgramError(..), Value(..))
+import Types 
 import Interpreter.Control
 
 -- | Execute a stream of tokens

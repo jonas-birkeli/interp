@@ -14,8 +14,8 @@ module Parser.Value
     ) where
 
 import Types
-import Data.Char (isDigit)
-import Text.Read (readMaybe)
+import Data.Char
+import Text.Read
 
 -- | Parse a single value
 parseValue :: String -> Either ParseError Value

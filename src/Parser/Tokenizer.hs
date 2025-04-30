@@ -3,7 +3,7 @@ module Parser.Tokenizer
         tokenize
     ) where
 
-import Data.Char (isSpace)
+import Data.Char 
 
 -- | Tokenize a string, respecting quoted strings, braces, and brackets
 --

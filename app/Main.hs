@@ -1,12 +1,12 @@
 module Main (main) where
 
-import Types (State)
-import Lib (evalProgram, runFile, runREPL)
-import Interpreter (initialState)
-import System.Environment (getArgs)
-import System.Directory (doesFileExist)
-import Data.Maybe (fromMaybe)
-import Control.Monad.Extra (ifM, void)
+import Types 
+import Lib
+import Interpreter
+import System.Environment
+import System.Directory 
+import Data.Maybe 
+import Control.Monad.Extra
 
 -- | The main entry point
 main :: IO ()

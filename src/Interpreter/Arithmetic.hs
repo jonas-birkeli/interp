@@ -10,7 +10,7 @@ module Interpreter.Arithmetic
     ) where
 
 import Types
-import Interpreter.Stack (pushValue, popTwoValues)
+import Interpreter.Stack 
 
 -- | Basic arithmetic operations
 executeArithmetic :: (Double -> Double -> Double) -> State -> Either ProgramError State

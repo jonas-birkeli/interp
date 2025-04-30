@@ -6,6 +6,6 @@ module Parser
     , module Parser.Value
     ) where
 
-import Parser.Core (parseProgram)
+import Parser.Core 
 import Parser.Tokenizer
 import Parser.Value

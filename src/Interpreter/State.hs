@@ -3,7 +3,7 @@ module Interpreter.State
         initialState
     ) where
 
-import Types (State(..))
+import Types
 import qualified Data.Map as Map
 
 -- | Initial interpreter state
