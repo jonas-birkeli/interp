@@ -1,10 +1,13 @@
-module Intepreter.HigherOrder 
-    (
+module Interpreter.HigherOrder
+    ( 
+        applyEach
         executeMap,
         executeEach,
         executeFoldl,
+        applyToItem,
         applyFunction,
         applyToElement,
+        mapListWithQuotation,
         foldListWithQuotation
     ) where
 
@@ -12,6 +15,25 @@ import Types (ProgramError(..), State(..), Value(..))
 import Interpreter.Stack (pushValue, popValue)
 import Interpreter.Core (splitAtQuotation, executeTokenStream)
 import Control.Monad (foldM)
+
+-- | Apply each operation to a single item
+applyEach :: Value -> [Token] -> State -> Either ProgramError State
+applyEach item tokens state = do
+    let state' = pushValue item state
+    (resultState, _) <- executeTokenStream tokens state'
+    return resultState
+
+-- | Execute each operation
+executeEach :: [Token] -> State -> Either ProgramError (State, [Token])
+--executeEach [] state = Right (state, [])
+executeEach (token:tokens) state = do
+    (quotationTokens, remainingTokens) <- splitAtQuotation tokens
+    (listValue, state') <- popValue state
+    case listValue of
+        ListValue values -> do
+            finalState <- foldM (applyToElement quotationTokens) state' values
+            return (finalState, remainingTokens)
+        _ -> Left $ ExpectedList listValue
 
 -- | Execute map operation
 executeMap :: [Token] -> State -> Either ProgramError (State, [Token])
@@ -23,18 +45,6 @@ executeMap tokens state = do
             -- Map over function, with function gotten from tokens
             result <- mapM (applyFunction quotationTokens) values
             let finalState = pushValue (ListValue result) state'
-            return (finalState, remainingTokens)
-        _ -> Left $ ExpectedList listValue
-
--- | Execute each operation
-executeEach :: [Token] -> State -> Either ProgramError (State, [Token])
---executeEach [] state = Right (state, [])
-executeEach (token:tokens) state = do
-    (quotationTokens, remainingTokens) <- splitAtQuotation tokens
-    (listValue, state') <- popValue state
-    case listValue of
-        ListValue values -> do
-            finalState <- foldM (applyToElement quotationTokens) state' values
             return (finalState, remainingTokens)
         _ -> Left $ ExpectedList listValue
 
@@ -53,6 +63,18 @@ executeFoldl state = do
                     foldListWithQuotation values initial [ValueToken quotation] state3
         _ -> Left $ ExpectedList list
 
+-- | Apply function to a single item
+applyToItem :: [Token] -> State -> Value -> Either ProgramError Value
+applyToItem tokens state item = do
+    -- Push item onto a clean state (starting with original state but empty stack)
+    let itemState = pushValue item state { stack = [] }
+    -- Execute the tokens on this state
+    (resultState, _) <- executeTokenStream tokens itemState
+    -- Get the result from the top of the stack
+    case stack resultState of
+        (result:_) -> Right result
+        [] -> Left StackEmpty
+
 -- | Apply a function to a single value
 applyFunction :: [Token] -> Value -> Either ProgramError Value
 applyFunction tokens value = do
@@ -70,6 +92,14 @@ applyToElement tokens state element = do
     -- Execute the tokens in new state
     (resultState, _) <- executeTokenStream tokens stateWithElement
     return resultState
+
+-- | Map a list with a quotation
+mapListWithQuotation :: [Value] -> [Token] -> State -> Either ProgramError State
+mapListWithQuotation values tokens state = do
+    -- Process each value in the list, collecting results
+    results <- mapM (applyToItem tokens state) values
+    -- Push the list of results onto the stack
+    return $ pushValue (ListValue results) state
 
 -- | Fold a list with a quotation
 foldListWithQuotation :: [Value] -> Value -> [Token] -> State -> Either ProgramError State
