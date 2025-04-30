@@ -1,4 +1,4 @@
-module Interpreter.TokenExecution
+module Interpreter.TokenProcessor
     (
         -- Core functions
         executeProgram,
