@@ -15,8 +15,7 @@ initialState :: State
 initialState = State
     {
         dictionary = Map.empty,
-        stack = [],
-        printBuffer = []
+        stack = []
     }
 
 -- | Execute the program (list of tokens) with given state
@@ -224,9 +223,9 @@ executeIntegerDivision state = do
     (v1, v2, state') <- popTwoValues state
     case (v1, v2) of
         (IntValue i1, IntValue i2) -> 
-            if i2 == 0
+            if i1 == 0
                 then Left DivisionByZero
-                else Right $ pushValue (IntValue (i1 `div` i2)) state'
+                else Right $ pushValue (IntValue (i2 `div` i1)) state'
         _ -> Left $ ExpectedBoolOrNumber v1
 
 -- | Execute floating-point division
@@ -436,21 +435,12 @@ executeExec state = do
             return finalState
         _ -> Left $ ExpectedQuotation quotation
 
--- | Execute println operation (purely functional)
-executePrintln :: State -> Either ProgramError State
-executePrintln state = do
-    (value, state') <- popValue state
-    -- Add the value to the print buffer with a newline indication
-    let newBuffer = printBuffer state' ++ [show value ++ "\n"]
-    return state' { printBuffer = newBuffer }
-
--- | Execute print operation (purely functional)
+-- | Execute print operation
 executePrint :: State -> Either ProgramError State
 executePrint state = do
     (value, state') <- popValue state
-    -- Add the value to the print buffer
-    let newBuffer = printBuffer state' ++ [show value]
-    return state' { printBuffer = newBuffer }
+    -- Print to stdout? TODO
+    return state'
 
 -- | Execute read operation
 executeRead :: State -> Either ProgramError State
