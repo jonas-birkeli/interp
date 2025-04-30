@@ -21,7 +21,7 @@ import Text.Read
 parseValue :: String -> Either ParseError Value
 parseValue "True" = Right $ BoolValue True
 parseValue "False" = Right $ BoolValue False
-parseValue s@('"':rest) =
+parseValue ('"':rest) =
     if not (null rest) && last rest == '"'
         then Right $ StringValue $ trimString $ init rest
         else Left IncompleteString
@@ -97,7 +97,7 @@ parseFloat s = case readMaybe s of
 
 -- | Parse a string literal
 parseString :: String -> Either ParseError Token
-parseString s@('"':rest) = 
+parseString ('"':rest) = 
     if not (null rest) && last rest == '"'
         then Right $ ValueToken $ StringValue $ trimString $ init rest
         else Left IncompleteString

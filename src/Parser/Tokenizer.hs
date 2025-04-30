@@ -46,7 +46,7 @@ import Data.Char
 -- >>> tokenize "    "
 -- []
 tokenize :: String -> [String]
-tokenize input = tokenize' [] "" False False input
+tokenize = tokenize' [] "" False False
   where
     -- tokenize' accumulator current_token in_string escaped_char input
     tokenize' acc curr _ _ [] 
@@ -83,3 +83,4 @@ tokenize input = tokenize' [] "" False False input
             then tokenize' ([c] : acc) "" False False cs  -- Single char token
             else tokenize' ([c] : reverse curr : acc) "" False False cs  -- End token, add special
         | otherwise = tokenize' acc (c : curr) False False cs  -- Add to token
+    tokenize' _ _ _ _ _ = error "Non-exhaustive pattern in tokenize'"

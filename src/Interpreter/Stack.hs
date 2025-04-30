@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Interpreter.Stack
     (
         pushValue,
@@ -33,7 +34,9 @@ popValues n state
 
 -- | Pop two values from stack
 popTwoValues :: State -> Either ProgramError (Value, Value, State)
-popTwoValues state = popValues 2 state >>= \([v1, v2], state') -> Right (v1, v2, state')
+popTwoValues state = popValues 2 state >>= \case
+  ([v1, v2], state') -> Right (v1, v2, state')
+  _ -> Left StackEmpty
 
 -- | Execute dup operation (duplicate top value)
 executeDup :: State -> Either ProgramError State
