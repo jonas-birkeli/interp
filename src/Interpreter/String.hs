@@ -5,9 +5,9 @@ module Interpreter.String
         executeWords
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
-import Interpreter.Stack (pushValue, popValue)
-import Text.Read (readMaybe)
+import Types
+import Interpreter.Stack
+import Text.Read
 
 -- | Execute parseInteger operation
 executeParseInteger :: State -> Either ProgramError State

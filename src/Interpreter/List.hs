@@ -8,8 +8,8 @@ module Interpreter.List
         executeAppend
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
-import Interpreter.Stack (pushValue, popValue, popTwoValues)
+import Types
+import Interpreter.Stack
 
 -- | Execute head operation
 executeHead :: State -> Either ProgramError State

@@ -1,19 +1,15 @@
 module Interpreter.Core
     (
         executeProgram,
-        executeToken,
-        executeValue,
-        executeQuotationOrValue,
         executeOperator,
         extractFinalValue,
         evaluateValue,
         evaluateList
     ) where
 
-import Types (ProgramError(..), State(..), Token(..), Value(..))
+import Types
 import qualified Data.Map as Map
-import Interpreter.Execution (executeTokenStream)
-import Interpreter.Stack (pushValue, popValue)
+import Interpreter.Stack
 import Interpreter.Arithmetic
 import Interpreter.Comparison
 import Interpreter.Control
@@ -28,45 +24,6 @@ executeProgram tokens state = do
     (finalState', value) <- extractFinalValue finalState
     let evaluatedValue = evaluateValue value finalState'
     return (finalState, evaluatedValue)
-
--- | Execute a single token with a given state
-executeToken :: Token -> State -> Either ProgramError State
-executeToken token s = case token of
-    ValueToken value -> executeValue value s
-    OperatorToken op -> executeOperator op s
-    AssignmentToken -> executeAssignment s
-    FunctionToken -> executeFunction s
-    FoldlToken -> executeFoldl s
-    ExecToken -> executeExec s
-    -- Control flow tokens should be handled by executeTokenStream
-    IfToken -> Left $ UnknownSymbol "if token encountered out of context"
-    TimesToken -> Left $ UnknownSymbol "times token encountered out of context"
-    LoopToken -> Left $ UnknownSymbol "loop token encountered out of context"
-
--- | Execute a value, handling symbol lookup
-executeValue :: Value -> State -> Either ProgramError State
-executeValue value s = case value of
-    SymbolValue name ->
-        -- Check for occurancei in dict
-        case Map.lookup name (dictionary s) of
-            Just quotation@(QuotationValue tokens) ->
-                executeQuotationOrValue quotation s
-            Just value' ->
-            -- Push the value if its not an quotation
-                Right $ pushValue value' s
-            Nothing ->
-                -- Push the symbol itself if not found
-                Right $ pushValue value s
-    _ -> Right $ pushValue value s
-
--- | Execute a quotation or a direct value
-executeQuotationOrValue :: Value -> State -> Either ProgramError State
-executeQuotationOrValue value state = case value of
-    QuotationValue tokens -> 
-        -- Execute the quotation as a series of tokens
-        executeTokenStream tokens state >>= \(finalState, _) -> Right finalState
-    -- For non-quotation values, just push onto the stack
-    _ -> Right $ pushValue value state
 
 -- | Execute operator token
 executeOperator :: String -> State -> Either ProgramError State

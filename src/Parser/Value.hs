@@ -13,7 +13,7 @@ module Parser.Value
         trimString
     ) where
 
-import Types (ParseError(..), Token(..), Value(..))
+import Types
 import Data.Char (isDigit)
 import Text.Read (readMaybe)
 

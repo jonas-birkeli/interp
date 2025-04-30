@@ -4,8 +4,8 @@ module Interpreter.Variables
         executeFunction
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
-import Interpreter.Stack (popValue)
+import Types
+import Interpreter.Stack
 import qualified Data.Map as Map
 
 -- | Execute asisgnment operation (:=)

@@ -7,9 +7,9 @@ module Interpreter.Control
         execTimesIterative
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
-import Interpreter.Stack (pushValue, popValue)
-import Interpreter.Execution (splitAtQuotation, executeTokenStream)
+import Types 
+import Interpreter.TokenExecution
+import Interpreter.Stack
 
 -- | Execute if operation - handles the token stream
 executeIf :: [Token] -> State -> Either ProgramError (State, [Token])

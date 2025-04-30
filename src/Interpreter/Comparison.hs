@@ -9,8 +9,8 @@ module Interpreter.Comparison
         applyLogical
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
-import Interpreter.Stack (pushValue, popTwoValues, popValue)
+import Types
+import Interpreter.Stack
 
 -- | Execute comparison operations
 executeComparison :: (forall a. Ord a => a -> a -> Bool) -> State -> Either ProgramError State

@@ -11,10 +11,11 @@ module Interpreter.HigherOrder
         foldListWithQuotation
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
+import Types
 import Interpreter.Stack (pushValue, popValue)
-import Interpreter.Execution (splitAtQuotation, executeTokenStream)
+import Interpreter.TokenExecution
 import Control.Monad (foldM)
+import qualified Data.Map as Map
 
 -- | Apply each operation to a single item
 applyEach :: Value -> [Token] -> State -> Either ProgramError State

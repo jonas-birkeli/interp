@@ -9,7 +9,7 @@ module Interpreter.Arithmetic
         checkDivisionByZero
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
+import Types
 import Interpreter.Stack (pushValue, popTwoValues)
 
 -- | Basic arithmetic operations

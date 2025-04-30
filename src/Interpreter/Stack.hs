@@ -9,7 +9,7 @@ module Interpreter.Stack
         executePop
     ) where
 
-import Types (ProgramError(..), State(..), Value(..))
+import Types
 import Control.Monad ((>=>))
 
 -- | Push a value onto the stack
