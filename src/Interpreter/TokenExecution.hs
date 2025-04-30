@@ -1,5 +1,13 @@
 module Interpreter.TokenExecution
     (
+        -- Core functions
+        executeProgram,
+        executeOperator,
+        extractFinalValue,
+        evaluateValue,
+        evaluateList,
+
+        -- Token execution
         executeTokenStream,
         splitAtQuotation,
         executeToken,
@@ -24,17 +32,6 @@ module Interpreter.TokenExecution
         applyToElement,
         mapListWithQuotation,
         foldListWithQuotation,
-
-        -- Higher order functions
-        applyEach,
-        executeMap,
-        executeEach,
-        executeFoldl,
-        applyToItem,
-        applyFunction,
-        applyToElement,
-        mapListWithQuotation,
-        foldListWithQuotation
     ) where
 
 import Types 
@@ -84,6 +81,8 @@ executeToken token s = case token of
     IfToken -> Left $ UnknownSymbol "if token encountered out of context"
     TimesToken -> Left $ UnknownSymbol "times token encountered out of context"
     LoopToken -> Left $ UnknownSymbol "loop token encountered out of context"
+    MapToken -> Left $ UnknownSymbol "map token encountered out of context"
+    EachToken -> Left $ UnknownSymbol "each token encountered out of context"
 
 -- | Execute a value, handling symbol lookup
 executeValue :: Value -> State -> Either ProgramError State
@@ -91,7 +90,7 @@ executeValue value s = case value of
     SymbolValue name ->
         -- Check for occurancei in dict
         case Map.lookup name (dictionary s) of
-            Just quotation@(QuotationValue tokens) ->
+            Just quotation@(QuotationValue _) ->
                 executeQuotationOrValue quotation s
             Just value' ->
             -- Push the value if its not an quotation
@@ -204,8 +203,8 @@ applyEach item tokens state = do
 
 -- | Execute each operation
 executeEach :: [Token] -> State -> Either ProgramError (State, [Token])
---executeEach [] state = Right (state, [])
-executeEach (token:tokens) state = do
+executeEach [] state = Right (state, [])
+executeEach (_:tokens) state = do
     (quotationTokens, remainingTokens) <- splitAtQuotation tokens
     (listValue, state') <- popValue state
     case listValue of
@@ -258,7 +257,11 @@ applyToItem tokens state item = do
 applyFunction :: [Token] -> Value -> Either ProgramError Value
 applyFunction tokens value = do
     -- Duplicate state to make a copy of the stack
-    let tempState = State { dictionary = Map.empty, stack = [value]}
+    let tempState = State { 
+            dictionary = Map.empty, 
+            stack = [value],
+            printBuffer = []
+        }
     (resultState, _) <- executeTokenStream tokens tempState
     case stack resultState of
         (result:_) -> Right result
@@ -329,7 +332,7 @@ executeOperator op = case op of
     "append" -> executeAppend
     "print" -> executePrint
     "read" -> executeRead
-    _ -> \s -> Left $ UnknownSymbol op
+    _ -> \_ -> Left $ UnknownSymbol op
 
 -- | Extract the final value from state
 extractFinalValue :: State -> Either ProgramError (State, Value)
