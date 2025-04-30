@@ -7,6 +7,7 @@ import Types (ParseError(..), Token(..), Value(..))
 import Tokenizer (tokenize)
 import Data.Char (isDigit)
 import Text.Read (readMaybe)
+import Control.Monad (guard)
 
 -- | Parse a program string into a list of tokens
 parseProgram :: String -> Either ParseError [Token]
