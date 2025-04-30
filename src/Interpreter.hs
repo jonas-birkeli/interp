@@ -43,6 +43,8 @@ executeTokenStream (token:tokens) state =
         IfToken -> executeIf tokens state
         TimesToken -> executeTimes tokens state
         LoopToken -> executeLoop tokens state
+        -- Defered functions, needs token stream
+        MapToken -> executeMap tokens state
         -- For regular tokens, process them and continue with the stream
         _ -> do
             state' <- executeToken token state
@@ -55,7 +57,7 @@ executeToken token s = case token of
     OperatorToken op -> executeOperator op s
     AssignmentToken -> executeAssignment s
     FunctionToken -> executeFunction s
-    MapToken -> executeMap s
+    --MapToken -> executeMap s
     FoldlToken -> executeFoldl s
     EachToken -> executeEach s
     ExecToken -> executeExec s
@@ -446,16 +448,27 @@ executeRead state = do
     return $ pushValue (StringValue "") state
 
 -- | Execute map operation
-executeMap :: State -> Either ProgramError State
-executeMap state = do
-    (quotation, state1) <- popValue state
-    (list, state2) <- popValue state1
-    case list of
-        ListValue values ->
-            case quotation of
-                QuotationValue tokens -> mapListWithQuotation values tokens state2
-                _ -> mapListWithQuotation values [ValueToken quotation] state2
-        _ -> Left $ ExpectedList list
+executeMap :: [Token] -> State -> Either ProgramError (State, [Token])
+executeMap tokens state = do
+    (quotationTokens, remainingTokens) <- splitAtQuotation tokens
+    (listValue, state') <- popValue state
+    case listValue of
+        ListValue values -> do
+            -- Map over function, with function gotten from tokens
+            result <- mapM (applyFunction quotationTokens) values
+            let finalState = pushValue (ListValue result) state'
+            return (finalState, remainingTokens)
+        _ -> Left $ ExpectedList listValue
+
+-- | Apply a function to a single value
+applyFunction :: [Token] -> Value -> Either ProgramError Value
+applyFunction tokens value = do
+    -- Duplicate state to make a copy of the stack
+    let tempState = State { dictionary = Map.empty, stack = [value]}
+    (resultState, _) <- executeTokenStream tokens tempState
+    case stack resultState of
+        (result:_) -> Right result
+        [] -> Left StackEmpty
 
 -- | Map a list with a quotation
 mapListWithQuotation :: [Value] -> [Token] -> State -> Either ProgramError State
