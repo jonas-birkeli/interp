@@ -25,12 +25,26 @@ data Value
 -- | Custom show instance for Value
 instance Show Value where
   show (IntValue i) = show i
-  show (FloatValue f) = show f
-  show (BoolValue b) = show b
-  show (StringValue s) = "\"" ++ s ++ "\""
-  show (ListValue lv) = show lv
-  show (QuotationValue qv) = "{ " ++ unwords (map show qv) ++ " }"
-  show (SymbolValue sv) = sv
+    show (FloatValue f) = show f
+    show (BoolValue b) = show b
+    show (StringValue s) = "\"" ++ s ++ "\""
+    show (ListValue lv) = show lv
+    show (QuotationValue qv) = "{ " ++ unwords (map showToken qv) ++ " }"
+    show (SymbolValue sv) = sv
+
+-- | Helper function to show tokens in a nice way
+showToken :: Token -> String
+showToken (ValueToken v) = show v
+showToken (OperatorToken op) = op
+showToken AssignmentToken = ":="
+showToken FunctionToken = "fun"
+showToken IfToken = "if"
+showToken TimesToken = "times"
+showToken LoopToken = "loop"
+showToken MapToken = "map"
+showToken FoldlToken = "foldl"
+showToken EachToken = "each"
+showToken ExecToken = "exec"
 
 -- | Tokens represent the parsed program
 data Token
