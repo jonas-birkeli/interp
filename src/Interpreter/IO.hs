@@ -10,9 +10,9 @@ import Interpreter.Stack
 -- | Execute print operation
 executePrint :: State -> Either ProgramError State
 executePrint state = do
-    (_, state') <- popValue state
-    -- Print to stdout? TODO
-    return state'
+    (v, state') <- popValue state
+    let buffer = printBuffer state' ++ [show v]
+    return state' { printBuffer = buffer}
 
 -- | Execute read operation
 executeRead :: State -> Either ProgramError State

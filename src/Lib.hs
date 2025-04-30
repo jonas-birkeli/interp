@@ -22,9 +22,8 @@ evalLine line state = case parseProgram line of
             Left err -> do
                 putStrLn $ "Execution error: " ++ show err
                 return state
-            Right (newState, _) -> do
-                _ <- displayPrintBuffer newState
-                return newState
+            Right (state', _) -> do
+                displayPrintBuffer state'
 
 -- | Formats stack for display
 formatStack :: Stack -> String
