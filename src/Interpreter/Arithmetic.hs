@@ -6,7 +6,7 @@ module Interpreter.Arithmetic
         applyArithmetic,
         applyDivision,
         checkDivisionByZero
-    )
+    ) where
 
 import Types (ProgramError(..), State(..), Value(..))
 import Interpreter.Stack (pushValue, popTwoValues)
