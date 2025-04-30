@@ -45,6 +45,7 @@ executeTokenStream (token:tokens) state =
         LoopToken -> executeLoop tokens state
         -- Defered functions, needs token stream
         MapToken -> executeMap tokens state
+        EachToken -> executeEach tokens state
         -- For regular tokens, process them and continue with the stream
         _ -> do
             state' <- executeToken token state
@@ -59,7 +60,7 @@ executeToken token s = case token of
     FunctionToken -> executeFunction s
     --MapToken -> executeMap s
     FoldlToken -> executeFoldl s
-    EachToken -> executeEach s
+    --EachToken -> executeEach s
     ExecToken -> executeExec s
     -- Control flow tokens should be handled by executeTokenStream
     IfToken -> Left $ UnknownSymbol "if token encountered out of context"
@@ -491,18 +492,24 @@ applyToItem tokens state item = do
         [] -> Left StackEmpty
 
 -- | Execute each operation
-executeEach :: State -> Either ProgramError State
-executeEach state = do
-    (quotation, state1) <- popValue state
-    (list, state2) <- popValue state1
-    case list of
-        ListValue values ->
-            case quotation of
-                QuotationValue tokens -> 
-                    foldM (\s item -> applyEach item tokens s) state2 values
-                _ -> 
-                    foldM (\s item -> applyEach item [ValueToken quotation] s) state2 values
-        _ -> Left $ ExpectedList list
+executeEach :: [Token] -> State -> Either ProgramError (State, [Token])
+--executeEach [] state = Right (state, [])
+executeEach (token:tokens) state = do
+    (quotationTokens, remainingTokens) <- splitAtQuotation tokens
+    (listValue, state') <- popValue state
+    case listValue of
+        ListValue values -> do
+            finalState <- foldM (applyToElement quotationTokens) state' values
+            return (finalState, remainingTokens)
+        _ -> Left $ ExpectedList listValue
+
+-- | Apply a function to a single element and update the state
+applyToElement :: [Token] -> State -> Value -> Either ProgramError State
+applyToElement tokens state element = do
+    let stateWithElement = pushValue element state
+    -- Execute the tokens in new state
+    (resultState, _) <- executeTokenStream tokens stateWithElement
+    return resultState
 
 -- | Apply each operation to a single item
 applyEach :: Value -> [Token] -> State -> Either ProgramError State
