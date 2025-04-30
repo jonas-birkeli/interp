@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -26,9 +26,20 @@ source-repository head
 library
   exposed-modules:
       Interpreter
+      Interpreter.Arithmetic
+      Interpreter.Comparison
+      Interpreter.IO
+      Interpreter.List
+      Interpreter.Stack
+      Interpreter.State
+      Interpreter.String
+      Interpreter.TokenProcessor
+      Interpreter.Variables
       Lib
       Parser
-      Tokenizer
+      Parser.Core
+      Parser.Tokenizer
+      Parser.Value
       Types
   other-modules:
       Paths_interpreter

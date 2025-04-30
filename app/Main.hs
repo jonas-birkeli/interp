@@ -1,12 +1,11 @@
 module Main (main) where
 
-import Types (State)
-import Lib (evalProgram, runFile, runREPL)
-import Interpreter (initialState)
-import System.Environment (getArgs)
-import System.Directory (doesFileExist)
-import Data.Maybe (fromMaybe)
-import Control.Monad.Extra (ifM, void)
+import Types 
+import Lib
+import Interpreter
+import System.Environment
+import System.Directory 
+import Control.Monad.Extra
 
 -- | The main entry point
 main :: IO ()
@@ -71,8 +70,8 @@ runWithPrelude filePath = void $ loadPrelude >>= maybe (runFile filePath) (loadA
 
 -- | Load the prelude file if it exists
 loadPrelude :: IO (Maybe (IO State))
-loadPrelude = ifM (doesFileExist "prelude.i") -- Monadic if-statementt :)
-    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.in") -- Wrap in Just . because maybe
+loadPrelude = ifM (doesFileExist "prelude.i")
+    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.in")
     (pure Nothing)
 
 -- | Load and run file with a state

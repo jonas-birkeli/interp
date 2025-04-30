@@ -4,11 +4,11 @@ module Lib
         runFile,
         runREPL
     ) where
+
 import Types
-    ( ParseError, ProgramError(..), State(stack, printBuffer), Stack, Token(..), Value )
-import Parser (parseProgram)
-import Interpreter (initialState, executeProgram, executeTokenStream)
-import System.IO (hFlush, stdout)
+import Parser
+import Interpreter
+import System.IO
 import Data.List (intercalate)
 
 -- | Evalutae a single line in the context for current state
@@ -23,17 +23,8 @@ evalLine line state = case parseProgram line of
                 putStrLn $ "Execution error: " ++ show err
                 return state
             Right (newState, _) -> do
-                -- putStrLn $ "Stack: " ++ formatStack 
-                -- Hide stack display unless calling ':stack'
-                newStateWithEmptyBuffer <- displayPrintBuffer newState
-                --(stack newState)
+                _ <- displayPrintBuffer newState
                 return newState
-
--- | Show execution result with stack info
-showExecutionResult :: (State, Value) -> IO ()
-showExecutionResult (newState, result) = do
-    putStrLn $ "Result: " ++ show result 
-    -- putStrLn $ "Stack: " ++ formatStack (stack newState)
 
 -- | Formats stack for display
 formatStack :: Stack -> String
