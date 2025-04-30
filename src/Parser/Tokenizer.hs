@@ -1,4 +1,4 @@
-module Tokenizer 
+module Parser.Tokenizer 
     (
         tokenize
     ) where
