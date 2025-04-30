@@ -13,7 +13,7 @@ module Interpreter.HigherOrder
 
 import Types (ProgramError(..), State(..), Value(..))
 import Interpreter.Stack (pushValue, popValue)
-import Interpreter.Core (splitAtQuotation, executeTokenStream)
+import Interpreter.Execution (splitAtQuotation, executeTokenStream)
 import Control.Monad (foldM)
 
 -- | Apply each operation to a single item

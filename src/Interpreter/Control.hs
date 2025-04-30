@@ -9,7 +9,7 @@ module Interpreter.Control
 
 import Types (ProgramError(..), State(..), Value(..))
 import Interpreter.Stack (pushValue, popValue)
-import Interpreter.Core (splitAtQuotation, executeTokenStream)
+import Interpreter.Execution (splitAtQuotation, executeTokenStream)
 
 -- | Execute if operation - handles the token stream
 executeIf :: [Token] -> State -> Either ProgramError (State, [Token])

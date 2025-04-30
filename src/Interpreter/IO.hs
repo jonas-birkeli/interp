@@ -7,7 +7,7 @@ module Interpreter.IO
 
 import Types (ProgramError(..), State(..), Value(..))
 import Interpreter.Stack (pushValue, popValue)
-import Interpreter.Core (executeTokenStream)
+import Interpreter.Execution (executeTokenStream)
 
 -- | Execute print operation
 executePrint :: State -> Either ProgramError State

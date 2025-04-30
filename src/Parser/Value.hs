@@ -2,7 +2,6 @@ module Parser.Value
     (
         parseValue,
         parseToken,
-        parseTokenValue,
         parseInt,
         parseFloat,
         parseString,

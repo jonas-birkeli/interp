@@ -1,19 +1,18 @@
 module Interpreter.Core
     (
         executeProgram,
-        executeTokenStream,
         executeToken,
         executeValue,
         executeQuotationOrValue,
         executeOperator,
         extractFinalValue,
         evaluateValue,
-        evaluateList,
-        splitAtQuotation
+        evaluateList
     ) where
 
 import Types (ProgramError(..), State(..), Token(..), Value(..))
 import qualified Data.Map as Map
+import Interpreter.Execution (executeTokenStream)
 import Interpreter.Stack (pushValue, popValue)
 import Interpreter.Arithmetic
 import Interpreter.Comparison
@@ -29,23 +28,6 @@ executeProgram tokens state = do
     (finalState', value) <- extractFinalValue finalState
     let evaluatedValue = evaluateValue value finalState'
     return (finalState, evaluatedValue)
-
--- | Execute a stream of tokens
-executeTokenStream :: [Token] -> State -> Either ProgramError (State, [Token])
-executeTokenStream [] state = Right (state, [])
-executeTokenStream (token:tokens) state = 
-    case token of
-        -- Control flow operations that need to handle the token stream
-        IfToken -> executeIf tokens state
-        TimesToken -> executeTimes tokens state
-        LoopToken -> executeLoop tokens state
-        -- Defered functions, needs token stream
-        MapToken -> executeMap tokens state
-        EachToken -> executeEach tokens state
-        -- For regular tokens, process them and continue with the stream
-        _ -> do
-            state' <- executeToken token state
-            executeTokenStream tokens state'
 
 -- | Execute a single token with a given state
 executeToken :: Token -> State -> Either ProgramError State
@@ -136,9 +118,3 @@ evaluateList (SymbolValue name : rest) state =
         Just value -> value : evaluateList rest state
         Nothing -> SymbolValue name : evaluateList rest state
 evaluateList (value : rest) state = value : evaluateList rest state
-
--- | Split token stream at the next quotation or single value
-splitAtQuotation :: [Token] -> Either ProgramError ([Token], [Token])
-splitAtQuotation [] = Left $ UnknownSymbol "Expected quotation, found end of program"
-splitAtQuotation (ValueToken (QuotationValue tokens):rest) = Right (tokens, rest)
-splitAtQuotation (token:rest) = Right ([token], rest)
