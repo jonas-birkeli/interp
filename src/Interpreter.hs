@@ -275,7 +275,10 @@ applyComparison op v1 v2 = case (v1, v2) of
 executeEquality :: State -> Either ProgramError State
 executeEquality state = do
     (v1, v2, state') <- popTwoValues state
-    let result = v1 == v2
+    let result = case (v1, v2) of
+        (IntValue i1, FloatValue f2) -> fromIntegral i1 == f2
+        (FloatValue f1, IntValue i2) -> f1 == fromIntegral i2
+        _ -> v1 == v2
     return $ pushValue (BoolValue result) state'
 
 -- | Execute logical opeartions
