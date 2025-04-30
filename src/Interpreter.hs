@@ -231,7 +231,7 @@ executeIntegerDivision state = do
 -- | Execute floating-point division
 executeFloatDivision :: State -> Either ProgramError State
 executeFloatDivision state = do
-    (v1, v2, state') <- popTwoValues state
+    (v2, v1, state') <- popTwoValues state
     checkDivisionByZero v2
     result <- applyDivision (/) v1 v2
     return $ pushValue result state'
