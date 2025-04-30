@@ -4,8 +4,8 @@ module Lib
         runFile,
         runREPL
     ) where
-import Types
-    ( ParseError, ProgramError(..), State(stack, printBuffer), Stack, Token(..), Value )
+
+import Types (ParseError, ProgramError(..), State(stack, printBuffer), Stack, Token(..), Value)
 import Parser (parseProgram)
 import Interpreter (initialState, executeProgram, executeTokenStream)
 import System.IO (hFlush, stdout)
