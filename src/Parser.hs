@@ -71,7 +71,7 @@ parseValue "True" = Right $ BoolValue True
 parseValue "False" = Right $ BoolValue False
 parseValue s@('"':rest) =
     if not (null rest) && last rest == '"'
-        then Right $ StringValue $ init rest
+        then Right $ StringValue $ trimString $ init rest
         else Left IncompleteString
 parseValue w
     | all isDigit w = Right $ IntValue $ read w
@@ -173,8 +173,15 @@ isStringLiteral _ = False
 
 -- | Parse a string literal
 parseString :: String -> Either ParseError Token
-parseString ('"':rest) = 
+parseString s@('"':rest) = 
     if not (null rest) && last rest == '"'
-        then Right $ ValueToken $ StringValue $ init rest
+        then Right $ ValueToken $ StringValue $ trimString $ init rest
         else Left IncompleteString
 parseString _ = Left IncompleteString
+
+-- | Trim spaces from string
+trimString :: String -> String
+trimString = trimLeading . trimTrailing
+    where
+        trimLeading = dropWhile (== ' ')
+        trimTrailing = reverse . trimLeading . reverse

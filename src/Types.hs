@@ -25,12 +25,12 @@ data Value
 -- | Custom show instance for Value
 instance Show Value where
   show (IntValue i) = show i
-    show (FloatValue f) = show f
-    show (BoolValue b) = show b
-    show (StringValue s) = "\"" ++ s ++ "\""
-    show (ListValue lv) = show lv
-    show (QuotationValue qv) = "{ " ++ unwords (map showToken qv) ++ " }"
-    show (SymbolValue sv) = sv
+  show (FloatValue f) = show f
+  show (BoolValue b) = show b
+  show (StringValue s) = "\"" ++ s ++ "\""
+  show (ListValue lv) = show lv
+  show (QuotationValue qv) = "{ " ++ unwords (map showToken qv) ++ " }"
+  show (SymbolValue sv) = sv
 
 -- | Helper function to show tokens in a nice way
 showToken :: Token -> String
