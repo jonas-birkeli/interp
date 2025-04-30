@@ -15,14 +15,31 @@ initialState :: State
 initialState = State
     {
         dictionary = Map.empty,
-        stack = []
+        stack = [],
+        printBuffer = []
     }
 
 -- | Execute the program (list of tokens) with given state
 executeProgram :: [Token] -> State -> Either ProgramError (State, Value)
 executeProgram tokens state = do
     (finalState, _) <- executeTokenStream tokens state
-    extractFinalValue finalState
+    (finalState', value) <- extractFinalValue finalState
+    let evaluatedValue = evaluateValue value finalState'
+    return (finalState, evaluatedValue)
+
+-- | Evaluate a value, resolving symbols in lists
+evaluateValue :: Value -> State -> Value
+evaluateValue (ListValue lv) state = ListValue (evaluateList lv state)
+evaluateValue value _ = value
+
+-- | Evaluate a list by replacing symbols with their values
+evaluateList :: [Value] -> State -> [Value]
+evaluateList [] _ = []
+evaluateList (SymbolValue name : rest) state =
+    case Map.lookup name (dictionary state) of
+        Just value -> value : evaluateList rest state
+        Nothing -> SymbolValue name : evaluateList rest state
+evaluateList (value : rest) state = value : evaluateList rest state
 
 -- | Make executeTokenStream available for REPL mode
 --executeTokenStream :: [Token] -> State -> Either ProgramError (State, [Token])
@@ -276,9 +293,9 @@ executeEquality :: State -> Either ProgramError State
 executeEquality state = do
     (v1, v2, state') <- popTwoValues state
     let result = case (v1, v2) of
-        (IntValue i1, FloatValue f2) -> fromIntegral i1 == f2
-        (FloatValue f1, IntValue i2) -> f1 == fromIntegral i2
-        _ -> v1 == v2
+                   (IntValue i1, FloatValue f2) -> fromIntegral i1 == f2
+                   (FloatValue f1, IntValue i2) -> f1 == fromIntegral i2
+                   _ -> v1 == v2
     return $ pushValue (BoolValue result) state'
 
 -- | Execute logical opeartions
