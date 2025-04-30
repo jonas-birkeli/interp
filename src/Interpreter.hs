@@ -258,7 +258,7 @@ applyDivision op v1 v2 = case (v1, v2) of
 -- | Execute comparison operations
 executeComparison :: (forall a. Ord a => a -> a -> Bool) -> State -> Either ProgramError State
 executeComparison op state = do
-    (v1, v2, state') <- popTwoValues state
+    (v2, v1, state') <- popTwoValues state
     result <- applyComparison op v1 v2
     return $ pushValue (BoolValue result) state'
 
