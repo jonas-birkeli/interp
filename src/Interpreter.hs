@@ -402,9 +402,12 @@ executeLength :: State -> Either ProgramError State
 executeLength state = do
     (value, state') <- popValue state
     case value of
-        ListValue lv -> Right $ pushValue (IntValue $ fromIntegral $ length lv) state'
-        StringValue sv -> Right $ pushValue (IntValue $ fromIntegral $ length sv) state'
-        QuotationValue qv -> Right $ pushValue (IntValue $ fromIntegral $ length qv) state'
+        ListValue lv -> 
+            Right $ pushValue (IntValue $ fromIntegral $ length lv) state'
+        StringValue sv -> 
+            Right $ pushValue (IntValue $ fromIntegral $ length sv) state'
+        QuotationValue qv -> 
+            Right $ pushValue (IntValue $ fromIntegral $ length qv) state'
         _ -> Left $ ExpectedEnumerable value
 
 -- | Execute cons operation
