@@ -238,19 +238,24 @@ applyArithmetic op v1 v2 = case (v1, v2) of
 executeIntegerDivision :: State -> Either ProgramError State
 executeIntegerDivision state = do
     (v1, v2, state') <- popTwoValues state
-    case (v1, v2) of
+    checkDivisionByZero v1
+    case (v2, v1) of
         (IntValue i1, IntValue i2) -> 
-            if i1 == 0
-                then Left DivisionByZero
-                else Right $ pushValue (IntValue (i2 `div` i1)) state'
+            Right $ pushValue (IntValue (i1 `div` i2)) state'
+        (IntValue i1, FloatValue f2) ->
+            Right $ pushValue (IntValue (i1 `div` round f2)) state'
+        (FloatValue f1, IntValue i2) ->
+            Right $ pushValue (IntValue (round f1 `div` i2)) state'
+        (FloatValue f1, FloatValue f2) ->
+            Right $ pushValue (IntValue (round f1 `div` round f2)) state'
         _ -> Left $ ExpectedBoolOrNumber v1
 
 -- | Execute floating-point division
 executeFloatDivision :: State -> Either ProgramError State
 executeFloatDivision state = do
-    (v2, v1, state') <- popTwoValues state
-    checkDivisionByZero v2
-    result <- applyDivision (/) v1 v2
+    (v1, v2, state') <- popTwoValues state
+    checkDivisionByZero v1
+    result <- applyDivision (/) v2 v1
     return $ pushValue result state'
 
 -- | Check for divison by zero
