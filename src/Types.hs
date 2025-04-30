@@ -6,7 +6,7 @@ module Types
       Token(..),
       Value(..),
       Dictionary,
-      Stack
+      Stack,
     ) where
 
 import qualified Data.Map as Map
@@ -56,7 +56,8 @@ type Dictionary = Map.Map String Value
 -- | The interpreter state
 data State = State
   { dictionary :: Dictionary,
-    stack :: Stack
+    stack :: Stack,
+    printBuffer :: [String] -- Stores messages to print
   }
 
 -- | Represents program execution errors

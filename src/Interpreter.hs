@@ -15,7 +15,8 @@ initialState :: State
 initialState = State
     {
         dictionary = Map.empty,
-        stack = []
+        stack = [],
+        printBuffer = []
     }
 
 -- | Execute the program (list of tokens) with given state
@@ -435,12 +436,21 @@ executeExec state = do
             return finalState
         _ -> Left $ ExpectedQuotation quotation
 
--- | Execute print operation
+-- | Execute println operation (purely functional)
+executePrintln :: State -> Either ProgramError State
+executePrintln state = do
+    (value, state') <- popValue state
+    -- Add the value to the print buffer with a newline indication
+    let newBuffer = printBuffer state' ++ [show value ++ "\n"]
+    return state' { printBuffer = newBuffer }
+
+-- | Execute print operation (purely functional)
 executePrint :: State -> Either ProgramError State
 executePrint state = do
     (value, state') <- popValue state
-    -- Print to stdout? TODO
-    return state'
+    -- Add the value to the print buffer
+    let newBuffer = printBuffer state' ++ [show value]
+    return state' { printBuffer = newBuffer }
 
 -- | Execute read operation
 executeRead :: State -> Either ProgramError State

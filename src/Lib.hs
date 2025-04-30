@@ -5,7 +5,7 @@ module Lib
         runREPL
     ) where
 import Types
-    ( ParseError, ProgramError(..), State(stack), Stack, Token(..), Value )
+    ( ParseError, ProgramError(..), State(stack, printBuffer), Stack, Token(..), Value )
 import Parser (parseProgram)
 import Interpreter (initialState, executeProgram, executeTokenStream)
 import System.IO (hFlush, stdout)
@@ -23,7 +23,10 @@ evalLine line state = case parseProgram line of
                 putStrLn $ "Execution error: " ++ show err
                 return state
             Right (newState, _) -> do
-                putStrLn $ "Stack: " ++ formatStack (stack newState)
+                -- putStrLn $ "Stack: " ++ formatStack 
+                -- Hide stack display unless calling ':stack'
+                newStateWithEmptyBuffer <- displayPrintBuffer newState
+                --(stack newState)
                 return newState
 
 -- | Show execution result with stack info
@@ -97,6 +100,14 @@ promptForInput :: IO ()
 promptForInput = do
     putStr "interp> "
     hFlush stdout
+
+-- | Display the print buffer
+displayPrintBuffer :: State -> IO State
+displayPrintBuffer state = do
+    -- Print each item in the buffer
+    mapM_ putStrLn (printBuffer state)
+    -- Return the state with an empty buffer
+    return state { printBuffer = [] }
 
 -- | Run a program from a file
 runFile :: FilePath -> IO State
