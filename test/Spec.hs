@@ -1,8 +1,6 @@
 module Main (main) where
 
 import Test.Hspec
-import Test.HUnit (assertBool)
-import qualified Data.Map as Map
 
 import Types
 import Parser
