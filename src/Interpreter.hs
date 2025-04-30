@@ -180,28 +180,9 @@ executeFunction state = do
             Right $ state2 { dictionary = Map.insert name quotation (dictionary state2 )}
         (_, _) -> Left $ ExpectedQuotation quotation
 
--- | Execute exec operation
-executeExec :: State -> Either ProgramError State
-executeExec state = do
-    (quotation, state') <- popValue state
-    case quotation of
-        QuotationValue tokens -> do
-            (finalState, _) <- executeTokenStream tokens state'
-            return finalState
-        _ -> Left $ ExpectedQuotation quotation
 
--- | Execute print operation
-executePrint :: State -> Either ProgramError State
-executePrint state = do
-    (value, state') <- popValue state
-    -- Print to stdout? TODO
-    return state'
 
--- | Execute read operation
-executeRead :: State -> Either ProgramError State
-executeRead state = do
-    -- Get from stdin? TODO
-    return $ pushValue (StringValue "") state
+
 
 -- | Map a list with a quotation
 mapListWithQuotation :: [Value] -> [Token] -> State -> Either ProgramError State
