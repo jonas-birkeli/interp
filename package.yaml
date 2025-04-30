@@ -26,6 +26,7 @@ dependencies:
 - mtl
 - directory
 - extra
+- HUnit
 
 ghc-options:
 - -Wall
@@ -62,3 +63,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - interpreter
+    - hspec
