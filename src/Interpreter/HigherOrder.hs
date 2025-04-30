@@ -1,6 +1,6 @@
 module Interpreter.HigherOrder
     ( 
-        applyEach
+        applyEach,
         executeMap,
         executeEach,
         executeFoldl,
