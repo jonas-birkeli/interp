@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-tabs #-}
+{-# LANGUAGE InstanceSigs #-}
 module Types (
     State(..),
     ProgramError(..),
@@ -74,6 +75,18 @@ data State = State
         stack :: Stack,            -- The operand stack
         printBuffer :: [String]    -- Stores messages to print
     }
+    
+-- | Custom show instance for State
+instance Show State where
+    show :: State -> String
+    show (State dict stk buf) = 
+        "State {dictionary = " ++ show dict ++ 
+        ", stack = " ++ show stk ++ 
+        ", printBuffer = " ++ show buf ++ "}"
+
+-- | Eq instance for State
+instance Eq State where
+    (State d1 s1 p1) == (State d2 s2 p2) = d1 == d2 && s1 == s2 && p1 == p2
 
 -- | Represents program execution errors
 data ProgramError
