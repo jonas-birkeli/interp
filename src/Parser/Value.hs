@@ -133,7 +133,4 @@ isNegativeNumber _ = False
 
 -- | Trim spaces from string
 trimString :: String -> String
-trimString = trimLeading . trimTrailing
-    where
-        trimLeading = dropWhile (== ' ')
-        trimTrailing = reverse . trimLeading . reverse
+trimString = dropWhile (== ' ') . reverse . dropWhile (== ' ') . reverse

@@ -53,4 +53,4 @@ executeSwap state = do
 
 -- | Execute pop operation (remove top value)
 executePop :: State -> Either ProgramError State
-executePop = popValue >=> \(_, state') -> Right state'
+executePop = popValue >=> (Right . snd)

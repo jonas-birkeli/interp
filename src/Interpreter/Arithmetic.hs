@@ -11,6 +11,7 @@ module Interpreter.Arithmetic
 
 import Types
 import Interpreter.Stack 
+import Control.Monad
 
 -- | Basic arithmetic operations
 -- >>> executeArithmetic (+) (State [IntValue 1, IntValue 2]) 
@@ -25,10 +26,9 @@ import Interpreter.Stack
 -- >>> executeArithmetic (-) (State [FloatValue 5.0, IntValue 3]) 
 -- Right (State [FloatValue 2.0])
 executeArithmetic :: (Double -> Double -> Double) -> State -> Either ProgramError State
-executeArithmetic op state =
-    popTwoValues state >>= \(v1, v2, state') ->
-        applyArithmetic op v1 v2 >>= \result ->
-            Right (pushValue result state')
+executeArithmetic op =
+    popTwoValues >=> \(v1, v2, s) ->
+        applyArithmetic op v1 v2 >>= Right . (`pushValue` s)
 
 -- | Execute integer division
 executeIntegerDivision :: State -> Either ProgramError State
