@@ -27,7 +27,7 @@ evalLine line state = case parseProgram line of
 
 -- | Formats stack for display
 formatStack :: Stack -> String
-formatStack = ("[" ++ ) . (++ "]") . intercalate ", " . map show -- dotfree stack
+formatStack s = "[" ++ intercalate ", " (map show s) ++ "]"
 
 -- | Handle parse errors
 handleParseError :: ParseError -> State -> IO State
@@ -72,8 +72,8 @@ processReplInput input state
     | input == ":clear" = do
         putStrLn "Stack cleared."
         pure $ Just state { stack = [] }
-    | input == ":stack" = do
-        putStrLn $ "Stack: " ++ formatStack ( stack state )
+    | input == ":dbg" || input == ":debug" = do
+        print state
         pure $ Just state
     | otherwise = Just <$> evalLine input state
 
