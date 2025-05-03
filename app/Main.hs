@@ -5,6 +5,7 @@ import Interpreter
 import System.Environment
 import System.Directory 
 import Control.Monad.Extra
+import Data.ByteString (fromFilePath)
 
 -- | The main entry point
 main :: IO ()
@@ -27,8 +28,25 @@ data RunMode = ReplMode
 -- | Execute a particular run mode
 executeMode :: RunMode -> IO ()
 executeMode ReplMode = startRepl
-executeMode (FileMode path) = runWithPrelude path
+executeMode (FileMode path) = do
+    program <- loadProgram path
+    runInterpreter initialState (programStep program)
 executeMode (InvalidFileMode path) = handleInvalidFile path
+
+-- | Load program with prelude
+loadProgram :: FilePath -> IO String
+loadProgram filePath = do
+    prelude <- readFileSafe "stdlib/prelude.in"
+    program <- readFileSafe filePath
+    return $ prelude ++ "\n" ++ program
+
+-- | Safely read a file, returning empty string if file doesn't exist
+readFileSafe :: FilePath -> IO String
+readFileSafe path = do
+    fileExists <- doesFileExist path
+    if fileExists
+        then readFile path
+        else return ""
 
 -- | Start the REPL
 startRepl :: IO ()
@@ -74,10 +92,3 @@ runWithPrelude filePath = do
     -- Run the combined program
     void $ evalProgram program initialState
 
--- | Safely read a file, returning empty string if file doesn't exist
-readFileSafe :: FilePath -> IO String
-readFileSafe path = do
-    fileExists <- doesFileExist path
-    if fileExists
-        then readFile path
-        else return ""
