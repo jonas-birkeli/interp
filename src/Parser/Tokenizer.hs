@@ -5,7 +5,7 @@ module Parser.Tokenizer
 
 import Data.Char 
 
--- | Tokenize a string, respecting quoted strings, braces, and brackets
+-- | Tokenize a string, respecting quoted strings, braces, and brackets, and handle comments
 --
 -- >>> tokenize "1 2 +"
 -- ["1","2","+"]
@@ -46,41 +46,39 @@ import Data.Char
 -- >>> tokenize "    "
 -- []
 tokenize :: String -> [String]
-tokenize = tokenize' [] "" False False
+tokenize = reverse . filter (not . null) . fst . foldl processChar ([], (False, ""))
   where
-    -- tokenize' accumulator current_token in_string escaped_char input
-    tokenize' acc curr _ _ [] 
-        | null curr = reverse acc
-        | otherwise = reverse (reverse curr : acc)
-    
-    -- Handle escaped characters in string
-    tokenize' acc curr True True (c:cs) = 
-        tokenize' acc (c : curr) True False cs  -- Add escaped char and continue
-    
-    -- Handle escape character
-    tokenize' acc curr True False ('\\':cs) = 
-        tokenize' acc ('\\' : curr) True True cs  -- Mark next char as escaped
-    
-    -- End of string
-    tokenize' acc curr True False ('"':cs) = 
-        tokenize' (reverse ('"' : curr) : acc) "" False False cs  -- End string
-    
-    -- Continue in string
-    tokenize' acc curr True False (c:cs) = 
-        tokenize' acc (c : curr) True False cs  -- Continue in string
-    
-    -- Start string
-    tokenize' acc curr False False ('"':cs) = 
-        tokenize' acc ('"' : curr) True False cs  -- Start string
-    
-    -- Handle normal state
-    tokenize' acc curr False False (c:cs)
-        | isSpace c = if null curr 
-                     then tokenize' acc curr False False cs  -- Skip whitespace
-                     else tokenize' (reverse curr : acc) "" False False cs  -- End token
-        | c `elem` "{}[]" = 
+    -- | Process each character in the input string
+    -- Parameters:
+    --   * (tokens, (inString, curr)): Current state with:
+    --     - tokens: Accumulated tokens so far
+    --     - inString: Whether we're inside a string
+    --     - curr: Current token being built
+    --   * char: Current character being processed
+    processChar (tokens, (inString, curr)) char = case (inString, char) of
+      -- Inside a string, encountered a closing quote
+      (True, '"')  -> (reverse curr : tokens, (False, ""))
+      
+      -- Inside a string, encountered a backslash (escape character)
+      (True, '\\') -> (tokens, (True, '\\' : curr))
+      
+      -- Inside a string, regular character
+      (True, c)    -> (tokens, (True, c : curr))
+      
+      -- Not in a string, encountered an opening quote
+      (False, '"') -> (tokens, (True, '"' : curr))
+      
+      -- Not in a string, other characters
+      (False, c) 
+        | isSpace c -> if null curr 
+                      then (tokens, (False, ""))           -- Skip whitespace
+                      else (reverse curr : tokens, (False, "")) -- End token
+                      
+        -- Special handling for brackets and braces
+        | c `elem` "{}[]" -> 
             if null curr
-            then tokenize' ([c] : acc) "" False False cs  -- Single char token
-            else tokenize' ([c] : reverse curr : acc) "" False False cs  -- End token, add special
-        | otherwise = tokenize' acc (c : curr) False False cs  -- Add to token
-    tokenize' _ _ _ _ _ = error "Non-exhaustive pattern in tokenize'"
+            then ([c] : tokens, (False, ""))               -- Single char token
+            else ([c] : reverse curr : tokens, (False, "")) -- End token + special char
+            
+        -- Regular character, add to current token
+        | otherwise -> (tokens, (False, c : curr))
