@@ -5,8 +5,6 @@ import Interpreter
 import System.Environment
 import System.Directory 
 import Control.Monad.Extra
-import Data.ByteString (fromFilePath)
-import Control.Monad.RWS (MonadState())
 import Text.ParserCombinators.ReadPrec ()
 import Types
 
