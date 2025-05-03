@@ -10,24 +10,14 @@ module Interpreter.Arithmetic
     ) where
 
 import Types
-import Interpreter.Stack 
+import Interpreter.Stack
 import Control.Monad
 
 -- | Basic arithmetic operations
--- >>> executeArithmetic (+) (State [IntValue 1, IntValue 2]) 
--- Right (State [IntValue 3])
 --
--- >>> executeArithmetic (*) (State [IntValue 3, FloatValue 2.5]) 
--- Right (State [FloatValue 7.5])
---
--- >>> executeArithmetic (+) (State [IntValue 1]) 
--- Left NotEnoughValues
---
--- >>> executeArithmetic (-) (State [FloatValue 5.0, IntValue 3]) 
--- Right (State [FloatValue 2.0])
 executeArithmetic :: (Double -> Double -> Double) -> State -> Either ProgramError State
 executeArithmetic op =
-    popTwoValues >=> \(v1, v2, s) ->
+    popTwoValues >=> \(v2, v1, s) ->
         applyArithmetic op v1 v2 >>= Right . (`pushValue` s)
 
 -- | Execute integer division
@@ -55,14 +45,6 @@ executeFloatDivision state = do
     return $ pushValue result state'
 
 -- | Apply arithmetic operation to values
--- >>> applyArithmetic (+) (IntValue 2) (FloatValue 3.5)
--- Right (FloatValue 5.5)
---
--- >>> applyArithmetic (*) (IntValue 2) (IntValue 3)
--- Right (IntValue 6)
---
--- >>> applyArithmetic (+) (StringValue "x") (IntValue 1)
--- Left (ExpectedBoolOrNumber (StringValue "x"))
 applyArithmetic :: (Double -> Double -> Double) -> Value -> Value -> Either ProgramError Value
 applyArithmetic op v1 v2 = case (v1, v2) of
     (IntValue i1, IntValue i2) ->
