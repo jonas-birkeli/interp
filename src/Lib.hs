@@ -80,16 +80,16 @@ processReplInput input state
 -- | Run the REPL (Read-Eval-Print Loop)
 runREPL :: State -> IO ()
 runREPL state = do
-    promptForInput
-    input <- getLine
+    input <- promptAndGetInput
     maybeState <- processReplInput input state
     maybe (pure ()) runREPL maybeState
 
--- | Display the REPL prompt
-promptForInput :: IO ()
-promptForInput = do
+-- | Display prompt and get user input
+promptAndGetInput :: IO String
+promptAndGetInput = do
     putStr "interp> "
     hFlush stdout
+    getLine
 
 -- | Display the print buffer
 displayPrintBuffer :: State -> IO State
