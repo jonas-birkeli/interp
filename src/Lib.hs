@@ -72,8 +72,8 @@ processReplInput input state
     | input == ":clear" = do
         putStrLn "Stack cleared."
         pure $ Just state { stack = [] }
-    | input == ":dbg" || input == ":debug" = do
-        print state
+    | input == ":dbg" || input == ":debug" || input == ":stack" = do
+        putStrLn $ formatStack (stack state)
         pure $ Just state
     | otherwise = Just <$> evalLine input state
 
