@@ -6,6 +6,9 @@ import System.Environment
 import System.Directory 
 import Control.Monad.Extra
 import Data.ByteString (fromFilePath)
+import Control.Monad.RWS (MonadState(state))
+import Text.ParserCombinators.ReadPrec (step)
+import Types
 
 -- | The main entry point
 main :: IO ()
@@ -47,6 +50,14 @@ readFileSafe path = do
     if fileExists
         then readFile path
         else return ""
+
+-- | Run interpreter with given stepping function
+runInterpreter :: State -> (State -> IO (Maybe State)) -> IO ()
+runInterpreter state step = do
+    maybeNewState <- step state
+    case maybeNewState of
+        Just newState -> runInterpreter newState step
+        Nothing -> return ()
 
 -- | Start the REPL
 startRepl :: IO ()
