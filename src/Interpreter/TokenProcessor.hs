@@ -8,7 +8,6 @@ module Interpreter.TokenProcessor
         evaluateList,
 
         -- Token execution
-        executeTokenStream,
         splitAtQuotation,
         executeToken,
         executeValue,
@@ -45,44 +44,29 @@ import Interpreter.Comparison
 import Interpreter.Arithmetic
 import Control.Monad
 
--- Doctest imports, not needed in main program
--- $setup
--- >>> import Parser.Core
--- >>> import Interpreter.State
--- >>> import qualified Data.Map as Map
--- >>> let parseTokens' str = parseTokens str
--- Variable not in scope:
---   parseTokens :: t1_as9Y1[sk:1] -> t2_as9Y3[sk:1]
+-- | Split token stream at the next quotation or single value
+splitAtQuotation :: [Token] -> Either ProgramError ([Token], [Token])
+splitAtQuotation [] = Left $ UnknownSymbol "Expected quotation, found end of program"
+splitAtQuotation (ValueToken (QuotationValue tokens):rest) = Right (tokens, rest)
+splitAtQuotation (token:rest) = Right ([token], rest)
 
+executeToken :: [Token] -> State -> Either ProgramError (State, [Token])
+executeToken [] state = Right (state, [])
+executeToken (token:tokens) state = case token of
+    -- Control flow tokens with access to tokens
+    IfToken          -> executeAndContinue executeIf tokens state
+    TimesToken       -> executeAndContinue executeTimes tokens state
+    LoopToken        -> executeAndContinue executeLoop tokens state
+    MapToken         -> executeAndContinue executeMap tokens state
+    EachToken        -> executeAndContinue executeEach tokens state
+    FoldlToken       -> executeAndContinue executeFoldl tokens state
 
--- | Execute a stream of tokens
---
--- Examples:
---
--- >>> executeTokenStream (parseTokens' "10 20 +") initialState
--- Right (State {dictionary = fromList [], stack = [30], printBuffer = []},[] )
---
--- >>> executeTokenStream (parseTokens' "True False &&") initialState
--- Right (State {dictionary = fromList [], stack = [False], printBuffer = []},[] )
---
--- >>> executeTokenStream (parseTokens' "\"hello\" \"world\"") initialState
--- Right (State {dictionary = fromList [], stack = ["helloworld"], printBuffer = []},[] )
-executeTokenStream :: [Token] -> State -> Either ProgramError (State, [Token])
-executeTokenStream [] state = Right (state, [])
-executeTokenStream (token:tokens) state = 
-    case token of
-        -- Special tokens that consume part of the token stream
-        IfToken         -> executeAndContinue executeIf tokens state
-        TimesToken      -> executeAndContinue executeTimes tokens state
-        LoopToken       -> executeAndContinue executeLoop tokens state
-        MapToken        -> executeAndContinue executeMap tokens state
-        EachToken       -> executeAndContinue executeEach tokens state
-        FoldlToken      -> executeAndContinue executeFoldl tokens state
-        
-        -- Regular tokens that don't consume the token stream
-        _ -> do
-            state' <- executeToken token state
-            executeTokenStream tokens state'
+    -- Standard execution
+    ValueToken value -> (\newState -> (newState, tokens)) <$> executeValue value state
+    OperatorToken op -> (\newState -> (newState, tokens)) <$> executeOperator op state
+    AssignmentToken  -> (\newState -> (newState, tokens)) <$> executeAssignment state
+    FunctionToken    -> (\newState -> (newState, tokens)) <$> executeFunction state
+    ExecToken        -> (\newState -> (newState, tokens)) <$> executeExec state
 
 -- | Helper function to execute a token and continue with remaining tokens
 executeAndContinue :: ([Token] -> State -> Either ProgramError (State, [Token]))
@@ -91,31 +75,7 @@ executeAndContinue :: ([Token] -> State -> Either ProgramError (State, [Token]))
                    -> Either ProgramError (State, [Token])
 executeAndContinue operation tokens state = do
     (state', remainingTokens) <- operation tokens state
-    executeTokenStream remainingTokens state'
-
-
--- | Split token stream at the next quotation or single value
-splitAtQuotation :: [Token] -> Either ProgramError ([Token], [Token])
-splitAtQuotation [] = Left $ UnknownSymbol "Expected quotation, found end of program"
-splitAtQuotation (ValueToken (QuotationValue tokens):rest) = Right (tokens, rest)
-splitAtQuotation (token:rest) = Right ([token], rest)
-
--- | Execute a single token with a given state
-executeToken :: Token -> State -> Either ProgramError State
-executeToken token s = case token of
-    ValueToken value -> executeValue value s
-    OperatorToken op -> executeOperator op s
-    AssignmentToken -> executeAssignment s
-    FunctionToken -> executeFunction s
-    --FoldlToken -> executeFoldl s
-    ExecToken -> executeExec s
-    -- Control flow tokens should be handled by executeTokenStream
-    IfToken -> Left $ UnknownSymbol "if token encountered out of context"
-    TimesToken -> Left $ UnknownSymbol "times token encountered out of context"
-    LoopToken -> Left $ UnknownSymbol "loop token encountered out of context"
-    MapToken -> Left $ UnknownSymbol "map token encountered out of context"
-    EachToken -> Left $ UnknownSymbol "each token encountered out of context"
-    FoldlToken -> Left $ UnknownSymbol "foldl token encountered out of context"
+    executeToken remainingTokens state'
 
 -- | Execute a value, handling symbol lookup
 executeValue :: Value -> State -> Either ProgramError State
@@ -138,7 +98,7 @@ executeQuotationOrValue :: Value -> State -> Either ProgramError State
 executeQuotationOrValue value state = case value of
     QuotationValue tokens -> 
         -- Execute the quotation as a series of tokens
-        executeTokenStream tokens state >>= \(finalState, _) -> Right finalState
+        executeToken tokens state >>= \(finalState, _) -> Right finalState
     -- For non-quotation values, just push onto the stack
     _ -> Right $ pushValue value state
 
@@ -148,7 +108,7 @@ executeExec state = do
     (quotation, state') <- popValue state
     case quotation of
         QuotationValue tokens -> do
-            (finalState, _) <- executeTokenStream tokens state'
+            (finalState, _) <- executeToken tokens state'
             return finalState
         _ -> Left $ ExpectedQuotation quotation
 
@@ -161,10 +121,10 @@ executeIf tokens state = do
     
     case condition of
         BoolValue True -> do
-            (finalState, _) <- executeTokenStream thenBranch state'
+            (finalState, _) <- executeToken thenBranch state'
             return (finalState, rest)
         BoolValue False -> do
-            (finalState, _) <- executeTokenStream elseBranch state'
+            (finalState, _) <- executeToken elseBranch state'
             return (finalState, rest)
         _ -> Left $ ExpectedBool condition
 
@@ -202,7 +162,7 @@ executeLoopWithComponents initial condTokens bodyTokens initState =
     let initialState' = pushValue initial initState
         loop currentState = do
             -- Execute the condition and check top of stack
-            (condState, _) <- executeTokenStream condTokens currentState
+            (condState, _) <- executeToken condTokens currentState
             case stack condState of
                 (BoolValue True:restStack) ->
                     -- Condition is true, exit the loop
@@ -210,7 +170,7 @@ executeLoopWithComponents initial condTokens bodyTokens initState =
                 (BoolValue False:restStack) -> do
                     -- Condition is false, execute body and continue
                     let stateAfterCond = condState { stack = restStack }
-                    (bodyState, _) <- executeTokenStream bodyTokens stateAfterCond
+                    (bodyState, _) <- executeToken bodyTokens stateAfterCond
                     loop bodyState
                 (invalidValue:_) ->
                     Left (ExpectedBool invalidValue)
@@ -223,7 +183,7 @@ execTimesIterative :: [Token] -> Integer -> State -> Either ProgramError State
 execTimesIterative tokens count state =
     let loop 0 s = Right s
         loop n s = do
-            (s', _) <- executeTokenStream tokens s
+            (s', _) <- executeToken tokens s
             loop (n-1) s'
     in loop count state
 
@@ -231,7 +191,7 @@ execTimesIterative tokens count state =
 applyEach :: Value -> [Token] -> State -> Either ProgramError State
 applyEach item tokens state = do
     let state' = pushValue item state
-    (resultState, _) <- executeTokenStream tokens state'
+    (resultState, _) <- executeToken tokens state'
     return resultState
 
 -- | Execute each operation
@@ -293,7 +253,7 @@ applyToItem tokens state item = do
     -- Push item onto a clean state (starting with original state but empty stack)
     let itemState = pushValue item state { stack = [] }
     -- Execute the tokens on this state
-    (resultState, _) <- executeTokenStream tokens itemState
+    (resultState, _) <- executeToken tokens itemState
     -- Get the result from the top of the stack
     case stack resultState of
         (result:_) -> Right result
@@ -308,7 +268,7 @@ applyFunction tokens value = do
             stack = [value],
             printBuffer = []
         }
-    (resultState, _) <- executeTokenStream tokens tempState
+    (resultState, _) <- executeToken tokens tempState
     case stack resultState of
         (result:_) -> Right result
         [] -> Left StackEmpty
@@ -318,7 +278,7 @@ applyToElement :: [Token] -> State -> Value -> Either ProgramError State
 applyToElement tokens state element = do
     let stateWithElement = pushValue element state
     -- Execute the tokens in new state
-    (resultState, _) <- executeTokenStream tokens stateWithElement
+    (resultState, _) <- executeToken tokens stateWithElement
     return resultState
 
 -- | Map a list with a quotation
@@ -340,7 +300,7 @@ foldListWithQuotation values initial tokens state =
             -- psuh acc and current item onto stack in correct order
             let stateWithValues = pushValue item $ pushValue acc currentState
 
-            (newState, _) <- executeTokenStream tokens stateWithValues
+            (newState, _) <- executeToken tokens stateWithValues
 
             case stack newState of
                 (newAcc:restStack) ->
@@ -351,7 +311,7 @@ foldListWithQuotation values initial tokens state =
 -- | Execute the program (list of tokens) with given state
 executeProgram :: [Token] -> State -> Either ProgramError (State, Value)
 executeProgram tokens state = do
-    (finalState, _) <- executeTokenStream tokens state
+    (finalState, _) <- executeToken tokens state
     (finalState', value) <- extractFinalValue finalState
     let evaluatedValue = evaluateValue value finalState'
     return (finalState, evaluatedValue)
