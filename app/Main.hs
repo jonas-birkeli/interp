@@ -82,3 +82,11 @@ runWithPrelude filePath = do
     void $ evalProgram program initialState
   where
     preludePath = "stdlib/prelude.in"
+
+-- | Safely read a file, returning empty string if file doesn't exist
+readFileSafe :: FilePath -> IO String
+readFileSafe path = do
+    fileExists <- doesFileExist path
+    if fileExists
+        then readFile path
+        else return ""
