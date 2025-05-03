@@ -63,25 +63,16 @@ invalidFileMessages path =
         "Starting REPL mode instead"
     ]
 
--- | Run a file with prelude if available
+-- | Run a file with prelude if available (Applicative style)
 runWithPrelude :: FilePath -> IO ()
 runWithPrelude filePath = do
-    -- Check if prelude exists
-    preludeExists <- doesFileExist preludePath
-    -- Read user program
-    userProgram <- readFile filePath
-    program <- if preludeExists
-        then do
-            preludeCode <- readFile preludePath
-            -- Combine prelude with program
-            return $ preludeCode ++ "\n" ++ userProgram
-        else
-            return userProgram
+    -- Use applicative to read both files
+    program <- (\prelude user -> prelude ++ "\n" ++ user)
+               <$> readFileSafe "stdlib/prelude.in"
+               <*> readFileSafe filePath
     
-    -- Run program and ignore result
+    -- Run the combined program
     void $ evalProgram program initialState
-  where
-    preludePath = "stdlib/prelude.in"
 
 -- | Safely read a file, returning empty string if file doesn't exist
 readFileSafe :: FilePath -> IO String
