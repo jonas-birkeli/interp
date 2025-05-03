@@ -4,8 +4,8 @@ module Interpreter.IO
         executeRead,
     ) where
 
-import Types 
-import Interpreter.Stack 
+import Types
+import Interpreter.Stack
 
 -- | Execute print operation
 executePrint :: State -> Either ProgramError State
