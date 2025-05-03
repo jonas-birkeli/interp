@@ -36,7 +36,7 @@ module Interpreter.TokenProcessor
 
 import Types 
 import Interpreter.Stack
-import Data.Map as Map
+import qualified Data.Map as Map
 import Interpreter.Variables
 import Interpreter.String
 import Interpreter.List
@@ -57,6 +57,7 @@ executeTokenStream (token:tokens) state =
         -- Defered functions, needs token stream
         MapToken -> executeMap tokens state
         EachToken -> executeEach tokens state
+        FoldlToken -> executeFoldl tokens state
         -- For regular tokens, process them and continue with the stream
         _ -> do
             state' <- executeToken token state
@@ -75,7 +76,7 @@ executeToken token s = case token of
     OperatorToken op -> executeOperator op s
     AssignmentToken -> executeAssignment s
     FunctionToken -> executeFunction s
-    FoldlToken -> executeFoldl s
+    --FoldlToken -> executeFoldl s
     ExecToken -> executeExec s
     -- Control flow tokens should be handled by executeTokenStream
     IfToken -> Left $ UnknownSymbol "if token encountered out of context"
@@ -83,6 +84,7 @@ executeToken token s = case token of
     LoopToken -> Left $ UnknownSymbol "loop token encountered out of context"
     MapToken -> Left $ UnknownSymbol "map token encountered out of context"
     EachToken -> Left $ UnknownSymbol "each token encountered out of context"
+    FoldlToken -> Left $ UnknownSymbol "foldl token encountered out of context"
 
 -- | Execute a value, handling symbol lookup
 executeValue :: Value -> State -> Either ProgramError State
@@ -204,7 +206,7 @@ applyEach item tokens state = do
 -- | Execute each operation
 executeEach :: [Token] -> State -> Either ProgramError (State, [Token])
 executeEach [] state = Right (state, [])
-executeEach (_:tokens) state = do
+executeEach tokens state = do
     (quotationTokens, remainingTokens) <- splitAtQuotation tokens
     (listValue, state') <- popValue state
     case listValue of
@@ -227,18 +229,17 @@ executeMap tokens state = do
         _ -> Left $ ExpectedList listValue
 
 -- | Execute foldl operation
-executeFoldl :: State -> Either ProgramError State
-executeFoldl state = do
-    (quotation, state1) <- popValue state
-    (initial, state2) <- popValue state1
-    (list, state3) <- popValue state2
+executeFoldl :: [Token] -> State -> Either ProgramError (State, [Token])
+executeFoldl [] _ = Left $ UnknownSymbol "Expected quotation, found end of program"
+executeFoldl tokens state = do
+    (quotationTokens, remainingTokens) <- splitAtQuotation tokens
+    (initial, state1) <- popValue state
+    (list, state2) <- popValue state1
     case list of
-        ListValue values ->
-            case quotation of
-                QuotationValue tokens -> 
-                    foldListWithQuotation values initial tokens state3
-                _ -> 
-                    foldListWithQuotation values initial [ValueToken quotation] state3
+        ListValue values -> do
+            -- Run the fold op with the list, initial value and quotation
+            finalState <- foldListWithQuotation values initial quotationTokens state2
+            return (finalState, remainingTokens)
         _ -> Left $ ExpectedList list
 
 -- | Apply function to a single item
@@ -286,15 +287,21 @@ mapListWithQuotation values tokens state = do
 -- | Fold a list with a quotation
 foldListWithQuotation :: [Value] -> Value -> [Token] -> State -> Either ProgramError State
 foldListWithQuotation values initial tokens state =
-    let foldItem acc item = do
-            (accValue, accState) <- acc
-            let state' = pushValue item $ pushValue accValue accState
-            (resultState, _) <- executeTokenStream tokens state'
-            case stack resultState of
-                (result:rest) -> Right (result, resultState { stack = rest })
-                [] -> Left StackEmpty
-    in foldM (\(acc, s) item -> foldItem (Right (acc, s)) item) (initial, state) values >>= \(result, finalState) ->
+    foldM foldItem (state, initial) values >>= \(finalState, result) ->
         return $ pushValue result finalState
+    where 
+        foldItem :: (State, Value) -> Value -> Either ProgramError (State, Value)
+        foldItem (currentState, acc) item = do
+            -- psuh acc and current item onto stack in correct order
+            let stateWithValues = pushValue item $ pushValue acc currentState
+
+            (newState, _) <- executeTokenStream tokens stateWithValues
+
+            case stack newState of
+                (newAcc:restStack) ->
+                    Right (newState { stack = restStack }, newAcc)
+                [] ->
+                    Left StackEmpty
 
 -- | Execute the program (list of tokens) with given state
 executeProgram :: [Token] -> State -> Either ProgramError (State, Value)
@@ -337,7 +344,7 @@ executeOperator op = case op of
 -- | Extract the final value from state
 extractFinalValue :: State -> Either ProgramError (State, Value)
 extractFinalValue state = case stack state of
-    [] -> Left ProgramFinishedWithNoValues
+    [] -> Right (state, SymbolValue "")  -- Return a dummy empty symbol instead of an error
     [v] -> Right (state, v)
     vs -> Left (ProgramFinishedWithMultipleValues vs)
 
