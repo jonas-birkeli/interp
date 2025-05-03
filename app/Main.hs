@@ -1,6 +1,5 @@
 module Main (main) where
 
-import Types 
 import Lib
 import Interpreter
 import System.Environment
@@ -66,15 +65,20 @@ invalidFileMessages path =
 
 -- | Run a file with prelude if available
 runWithPrelude :: FilePath -> IO ()
-runWithPrelude filePath = void $ loadPrelude >>= maybe (runFile filePath) (loadAndRunFile filePath)
-
--- | Load the prelude file if it exists
-loadPrelude :: IO (Maybe (IO State))
-loadPrelude = ifM (doesFileExist "prelude.i")
-    (putStrLn "Loading prelude..." >> Just . (`evalProgram` initialState) <$> readFile "prelude.in")
-    (pure Nothing)
-
--- | Load and run file with a state
-loadAndRunFile :: FilePath -> IO State -> IO State
-loadAndRunFile filePath getInitialState = 
-    getInitialState >>= \state -> readFile filePath >>= flip evalProgram state
+runWithPrelude filePath = do
+    -- Check if prelude exists
+    preludeExists <- doesFileExist preludePath
+    -- Read user program
+    userProgram <- readFile filePath
+    program <- if preludeExists
+        then do
+            preludeCode <- readFile preludePath
+            -- Combine prelude with program
+            return $ preludeCode ++ "\n" ++ userProgram
+        else
+            return userProgram
+    
+    -- Run program and ignore result
+    void $ evalProgram program initialState
+  where
+    preludePath = "stdlib/prelude.in"
