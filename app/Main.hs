@@ -1,12 +1,13 @@
 module Main (main) where
 
-import Lib
+import Lib ( evalProgram, runREPL, displayPrintBuffer)
 import Interpreter
 import System.Environment
-import System.Directory 
+import System.Directory
 import Control.Monad.Extra
 import Text.ParserCombinators.ReadPrec ()
 import Types
+import Parser
 
 -- | The main entry point
 main :: IO ()
@@ -50,12 +51,47 @@ readFileSafe path = do
         else return ""
 
 -- | Run interpreter with given stepping function
-runInterpreter :: State -> (State -> IO (Maybe State)) -> IO ()
+runInterpreter :: State -> (State -> IO (Maybe (State, [Token]))) -> IO ()
 runInterpreter state step = do
     maybeNewState <- step state
     case maybeNewState of
-        Just newState -> runInterpreter newState step
+        Just (newState, remainingTokens) ->
+            if null remainingTokens
+                then return ()
+                else runInterpreter newState (processTokens remainingTokens)
+
+             --runInterpreter newState step
         Nothing -> return ()
+
+-- | Program step function
+programStep :: String -> State -> IO (Maybe (State, [Token]))
+programStep program state = do
+    -- Parse program
+    case parseProgram program of
+        Left _ -> do
+            return Nothing
+        Right tokens -> processTokens tokens state
+
+-- | Process tokens one by one
+processTokens :: [Token] -> State -> IO (Maybe (State, [Token]))
+processTokens [] state = do
+    -- Execute no token, eg. end of process
+    case extractFinalValue state of
+        Left _ -> do
+            return Nothing
+        Right (finalState, value) -> do
+            putStrLn $ "Result " ++ show value
+            return Nothing
+processTokens tokens@(currentToken:_) state = do
+    -- Execute single token, handle input and output
+    case executeToken tokens state of
+        Left _ -> do
+            return Nothing
+        Right (newState, remainingTokens) -> do
+            updatedState <- displayPrintBuffer newState
+            --handleInput newState
+            return (Just (updatedState, remainingTokens))
+            
 
 -- | Start the REPL
 startRepl :: IO ()
@@ -65,8 +101,8 @@ startRepl = do
 
 -- | Welcome messages for REPL mode
 welcomeMessages :: [String]
-welcomeMessages = 
-    [ 
+welcomeMessages =
+    [
         "",
         "You have now entered REPL mode",
         "Commands: ",
@@ -97,7 +133,7 @@ runWithPrelude filePath = do
     program <- (\prelude user -> prelude ++ "\n" ++ user)
                <$> readFileSafe "stdlib/prelude.in"
                <*> readFileSafe filePath
-    
+
     -- Run the combined program
     void $ evalProgram program initialState
 
