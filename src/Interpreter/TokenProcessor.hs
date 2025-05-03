@@ -45,23 +45,54 @@ import Interpreter.Comparison
 import Interpreter.Arithmetic
 import Control.Monad
 
+-- Doctest imports, not needed in main program
+-- $setup
+-- >>> import Parser.Core
+-- >>> import Interpreter.State
+-- >>> import qualified Data.Map as Map
+-- >>> let parseTokens' str = parseTokens str
+-- Variable not in scope:
+--   parseTokens :: t1_as9Y1[sk:1] -> t2_as9Y3[sk:1]
+
+
 -- | Execute a stream of tokens
+--
+-- Examples:
+--
+-- >>> executeTokenStream (parseTokens' "10 20 +") initialState
+-- Right (State {dictionary = fromList [], stack = [30], printBuffer = []},[] )
+--
+-- >>> executeTokenStream (parseTokens' "True False &&") initialState
+-- Right (State {dictionary = fromList [], stack = [False], printBuffer = []},[] )
+--
+-- >>> executeTokenStream (parseTokens' "\"hello\" \"world\"") initialState
+-- Right (State {dictionary = fromList [], stack = ["helloworld"], printBuffer = []},[] )
 executeTokenStream :: [Token] -> State -> Either ProgramError (State, [Token])
 executeTokenStream [] state = Right (state, [])
 executeTokenStream (token:tokens) state = 
     case token of
-        -- Control flow operations that need to handle the token stream
-        IfToken -> executeIf tokens state
-        TimesToken -> executeTimes tokens state
-        LoopToken -> executeLoop tokens state
-        -- Defered functions, needs token stream
-        MapToken -> executeMap tokens state
-        EachToken -> executeEach tokens state
-        FoldlToken -> executeFoldl tokens state
-        -- For regular tokens, process them and continue with the stream
+        -- Special tokens that consume part of the token stream
+        IfToken         -> executeAndContinue executeIf tokens state
+        TimesToken      -> executeAndContinue executeTimes tokens state
+        LoopToken       -> executeAndContinue executeLoop tokens state
+        MapToken        -> executeAndContinue executeMap tokens state
+        EachToken       -> executeAndContinue executeEach tokens state
+        FoldlToken      -> executeAndContinue executeFoldl tokens state
+        
+        -- Regular tokens that don't consume the token stream
         _ -> do
             state' <- executeToken token state
             executeTokenStream tokens state'
+
+-- | Helper function to execute a token and continue with remaining tokens
+executeAndContinue :: ([Token] -> State -> Either ProgramError (State, [Token]))
+                   -> [Token]
+                   -> State
+                   -> Either ProgramError (State, [Token])
+executeAndContinue operation tokens state = do
+    (state', remainingTokens) <- operation tokens state
+    executeTokenStream remainingTokens state'
+
 
 -- | Split token stream at the next quotation or single value
 splitAtQuotation :: [Token] -> Either ProgramError ([Token], [Token])
@@ -229,6 +260,20 @@ executeMap tokens state = do
         _ -> Left $ ExpectedList listValue
 
 -- | Execute foldl operation
+
+-- The foldl operation takes a list, an initial accumulator, and a quotation
+-- and folds the list from left to right, applying the quotation to each element.
+--
+-- Examples:
+--
+-- >>> executeTokenStream (parseTokens' "[ 5 3 2 ] 1 foldl { * }") initialState
+-- Right (State {dictionary = fromList [], stack = [30], printBuffer = []},[] )
+--
+-- >>> executeTokenStream (parseTokens' "[ 1 2 3 ] 0 foldl { + }") initialState
+-- Right (State {dictionary = fromList [], stack = [6], printBuffer = []},[] )
+--
+-- >>> executeTokenStream (parseTokens' "[ \"a\" \"b\" \"c\" ] \"\" foldl { swap + }") initialState
+-- Right (State {dictionary = fromList [], stack = ["abc"], printBuffer = []},[] )
 executeFoldl :: [Token] -> State -> Either ProgramError (State, [Token])
 executeFoldl [] _ = Left $ UnknownSymbol "Expected quotation, found end of program"
 executeFoldl tokens state = do
