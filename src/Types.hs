@@ -8,9 +8,15 @@ module Types (
     Value(..),
     Dictionary,
     Stack,
+    RunMode(..)
     ) where
 
 import qualified Data.Map as Map
+
+-- | Execution modes for the interpeter
+data RunMode = ReplMode
+    | FileMode FilePath
+    | InvalidFileMode FilePath
 
 -- | Core data types for values in the language
 data Value
@@ -71,22 +77,24 @@ type Dictionary = Map.Map String Value
 -- | The interpreter state
 data State = State
     { 
-        dictionary :: Dictionary,  -- Maps variable names to values
-        stack :: Stack,            -- The operand stack
-        printBuffer :: [String]    -- Stores messages to print
+        dictionary  :: Dictionary, -- Maps variable names to values
+        stack       :: Stack,      -- The operand stack
+        printBuffer :: [String],   -- Stores messages to print
+        requestRead :: Bool        -- Boolean to check if read has been requested in program
     }
     
 -- | Custom show instance for State
 instance Show State where
     show :: State -> String
-    show (State dict stk buf) = 
+    show (State dict stk buf req) = 
         "State {dictionary = " ++ show dict ++ 
         ", stack = " ++ show stk ++ 
-        ", printBuffer = " ++ show buf ++ "}"
+        ", printBuffer = " ++ show buf ++
+        ", requestRead = " ++ show req ++ "}"
 
 -- | Eq instance for State
 instance Eq State where
-    (State d1 s1 p1) == (State d2 s2 p2) = d1 == d2 && s1 == s2 && p1 == p2
+    (State d1 s1 p1 r1) == (State d2 s2 p2 r2) = d1 == d2 && s1 == s2 && p1 == p2 && r1 == r2
 
 -- | Represents program execution errors
 data ProgramError
