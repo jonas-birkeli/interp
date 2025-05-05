@@ -18,7 +18,6 @@ module Interpreter.TokenProcessor
         executeIf,
         executeTimes,
         executeLoop,
-        executeLoopWithComponents,
         execTimesIterative,
 
         -- Higher order functions
@@ -50,13 +49,14 @@ splitAtQuotation [] = Left $ UnknownSymbol "Expected quotation, found end of pro
 splitAtQuotation (ValueToken (QuotationValue tokens):rest) = Right (tokens, rest)
 splitAtQuotation (token:rest) = Right ([token], rest)
 
+-- Execute a single token
 executeToken :: [Token] -> State -> Either ProgramError (State, [Token])
 executeToken [] state = Right (state, [])
 executeToken (token:tokens) state = case token of
     -- Control flow tokens with access to tokens
-    IfToken          -> executeAndContinue executeIf tokens state
+    IfToken          -> executeIf tokens state
     TimesToken       -> executeAndContinue executeTimes tokens state
-    LoopToken        -> executeAndContinue executeLoop tokens state
+    LoopToken        -> executeLoop tokens state
     MapToken         -> executeAndContinue executeMap tokens state
     EachToken        -> executeAndContinue executeEach tokens state
     FoldlToken       -> executeAndContinue executeFoldl tokens state
@@ -67,6 +67,19 @@ executeToken (token:tokens) state = case token of
     AssignmentToken  -> (\newState -> (newState, tokens)) <$> executeAssignment state
     FunctionToken    -> (\newState -> (newState, tokens)) <$> executeFunction state
     ExecToken        -> (\newState -> (newState, tokens)) <$> executeExec state
+
+-- Execute control flow tokens,
+
+
+
+-- | Execute all tokens in a list until completion
+executeAllTokens :: [Token] -> State -> Either ProgramError State
+executeAllTokens = go
+  where
+    go [] state = Right state  -- All tokens processed
+    go remainingTokens state = do
+      (newState, moreTokens) <- executeToken remainingTokens state
+      go moreTokens newState
 
 -- | Helper function to execute a token and continue with remaining tokens
 executeAndContinue :: ([Token] -> State -> Either ProgramError (State, [Token]))
@@ -118,14 +131,10 @@ executeIf tokens state = do
     (condition, state') <- popValue state
     (thenBranch, afterThen) <- splitAtQuotation tokens
     (elseBranch, rest) <- splitAtQuotation afterThen
-    
+
     case condition of
-        BoolValue True -> do
-            (finalState, _) <- executeToken thenBranch state'
-            return (finalState, rest)
-        BoolValue False -> do
-            (finalState, _) <- executeToken elseBranch state'
-            return (finalState, rest)
+        BoolValue True -> Right (state', thenBranch ++ rest)
+        BoolValue False -> Right (state', elseBranch ++ rest)
         _ -> Left $ ExpectedBool condition
 
 -- | Execute times operation - handles the token stream
@@ -148,35 +157,28 @@ executeTimes tokens state = do
 executeLoop :: [Token] -> State -> Either ProgramError (State, [Token])
 executeLoop tokens state = do
     -- Pop the initial value and get break condition and body from token stream
-    (initial, state') <- popValue state
+    --(initial, state') <- popValue state
     (condTokens, afterCond) <- splitAtQuotation tokens
     (bodyTokens, rest) <- splitAtQuotation afterCond
-    
-    -- Execute the loop with these components
-    finalState <- executeLoopWithComponents initial condTokens bodyTokens state'
-    return (finalState, rest)
 
--- | Execute a loop with specified components
-executeLoopWithComponents :: Value -> [Token] -> [Token] -> State -> Either ProgramError State
-executeLoopWithComponents initial condTokens bodyTokens initState =
-    let initialState' = pushValue initial initState
-        loop currentState = do
-            -- Execute the condition and check top of stack
-            (condState, _) <- executeToken condTokens currentState
-            case stack condState of
-                (BoolValue True:restStack) ->
-                    -- Condition is true, exit the loop
-                    Right $ condState { stack = restStack }
-                (BoolValue False:restStack) -> do
-                    -- Condition is false, execute body and continue
-                    let stateAfterCond = condState { stack = restStack }
-                    (bodyState, _) <- executeToken bodyTokens stateAfterCond
-                    loop bodyState
-                (invalidValue:_) ->
-                    Left (ExpectedBool invalidValue)
-                [] ->
-                    Left StackEmpty
-    in loop initialState'
+    -- Return state +
+    -- condition
+    -- iftoken, which triggers the condition to be ran
+
+    return (state, 
+        condTokens ++ 
+        [IfToken] ++ 
+        [ValueToken (
+            QuotationValue 
+                rest
+            )] ++ 
+        [ValueToken (
+            QuotationValue ( 
+                bodyTokens ++ 
+                [LoopToken] ++ 
+                tokens
+            )
+        )])
 
 -- | Iterative implementation of times operation
 execTimesIterative :: [Token] -> Integer -> State -> Either ProgramError State
@@ -266,7 +268,8 @@ applyFunction tokens value = do
     let tempState = State { 
             dictionary = Map.empty, 
             stack = [value],
-            printBuffer = []
+            printBuffer = [],
+            requestRead = False
         }
     (resultState, _) <- executeToken tokens tempState
     case stack resultState of
