@@ -1,10 +1,8 @@
 module Main (main) where
 
-import Lib
 import Interpreter
 import System.Environment
 import System.Directory
-import Control.Monad.Extra
 import Text.ParserCombinators.ReadPrec ()
 import Types
 import Parser
@@ -35,10 +33,10 @@ executeMode (InvalidFileMode path) = putStrLn $ "Did not find file: "++ path
 
 -- | Load program with prelude
 loadProgram :: FilePath -> IO String
-loadProgram filePath = do
-    prelude <- readFileSafe "stdlib/prelude.in"
-    program <- readFileSafe filePath
-    return $ prelude ++ "\n" ++ program
+loadProgram filePath = (++) 
+    <$> readFileSafe "stdlib/prelude.in" 
+    <*> ((++) "\n" 
+    <$> readFileSafe filePath)
 
 -- | Safely read a file, returning empty string if file doesn't exist
 readFileSafe :: FilePath -> IO String
@@ -97,7 +95,7 @@ processToken [] state = do
         Right (_, value) -> do
             putStrLn $ "Return value: " ++ show value
             return Nothing
-processToken tokens state = do
+processToken tokens@(token:remainder) state = do
     -- Execute single token, handle input and output
     case executeToken tokens state of
         Left err -> do
