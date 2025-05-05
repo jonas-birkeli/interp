@@ -55,7 +55,7 @@ executeToken [] state = Right (state, [])
 executeToken (token:tokens) state = case token of
     -- Control flow tokens with access to tokens
     IfToken          -> executeIf tokens state
-    TimesToken       -> executeAndContinue executeTimes tokens state
+    TimesToken       -> executeTimes tokens state
     LoopToken        -> executeLoop tokens state
     MapToken         -> executeAndContinue executeMap tokens state
     EachToken        -> executeAndContinue executeEach tokens state
@@ -67,19 +67,6 @@ executeToken (token:tokens) state = case token of
     AssignmentToken  -> (\newState -> (newState, tokens)) <$> executeAssignment state
     FunctionToken    -> (\newState -> (newState, tokens)) <$> executeFunction state
     ExecToken        -> (\newState -> (newState, tokens)) <$> executeExec state
-
--- Execute control flow tokens,
-
-
-
--- | Execute all tokens in a list until completion
-executeAllTokens :: [Token] -> State -> Either ProgramError State
-executeAllTokens = go
-  where
-    go [] state = Right state  -- All tokens processed
-    go remainingTokens state = do
-      (newState, moreTokens) <- executeToken remainingTokens state
-      go moreTokens newState
 
 -- | Helper function to execute a token and continue with remaining tokens
 executeAndContinue :: ([Token] -> State -> Either ProgramError (State, [Token]))
@@ -140,45 +127,27 @@ executeIf tokens state = do
 -- | Execute times operation - handles the token stream
 executeTimes :: [Token] -> State -> Either ProgramError (State, [Token])
 executeTimes tokens state = do
-    -- Pop the count and get the code block
-    (countValue, state') <- popValue state
+    (val, s') <- popValue state
     (block, rest) <- splitAtQuotation tokens
-    
-    case countValue of
-        IntValue count ->
-            if count <= 0
-                then Right (state', rest)
-                else do
-                    finalState <- execTimesIterative block count state'
-                    return (finalState, rest)
-        _ -> Left $ ExpectedBoolOrNumber countValue
+    count <- fromIntegerValue val
+    pure (s', concat (replicate count block) ++ rest)
+  where
+    fromIntegerValue (IntValue n) = Right $ fromInteger n
+    fromIntegerValue x = Left $ ExpectedBoolOrNumber x
 
 -- | Execute loop operation - handles the token stream
 executeLoop :: [Token] -> State -> Either ProgramError (State, [Token])
 executeLoop tokens state = do
-    -- Pop the initial value and get break condition and body from token stream
-    --(initial, state') <- popValue state
+    -- Get break condition and body from token stream
     (condTokens, afterCond) <- splitAtQuotation tokens
     (bodyTokens, rest) <- splitAtQuotation afterCond
-
-    -- Return state +
-    -- condition
-    -- iftoken, which triggers the condition to be ran
-
-    return (state, 
-        condTokens ++ 
-        [IfToken] ++ 
-        [ValueToken (
-            QuotationValue 
-                rest
-            )] ++ 
-        [ValueToken (
-            QuotationValue ( 
-                bodyTokens ++ 
-                [LoopToken] ++ 
-                tokens
-            )
-        )])
+    
+    -- Create the loop structure more concisely
+    let condQuote = ValueToken (QuotationValue rest)
+        bodyQuote = ValueToken (QuotationValue (bodyTokens ++ [LoopToken] ++ tokens))
+        
+    -- Return state with reconstructed tokens
+    return (state, condTokens ++ [IfToken, condQuote, bodyQuote])
 
 -- | Iterative implementation of times operation
 execTimesIterative :: [Token] -> Integer -> State -> Either ProgramError State
@@ -237,17 +206,23 @@ executeMap tokens state = do
 -- >>> executeTokenStream (parseTokens' "[ \"a\" \"b\" \"c\" ] \"\" foldl { swap + }") initialState
 -- Right (State {dictionary = fromList [], stack = ["abc"], printBuffer = []},[] )
 executeFoldl :: [Token] -> State -> Either ProgramError (State, [Token])
-executeFoldl [] _ = Left $ UnknownSymbol "Expected quotation, found end of program"
 executeFoldl tokens state = do
-    (quotationTokens, remainingTokens) <- splitAtQuotation tokens
-    (initial, state1) <- popValue state
-    (list, state2) <- popValue state1
-    case list of
-        ListValue values -> do
-            -- Run the fold op with the list, initial value and quotation
-            finalState <- foldListWithQuotation values initial quotationTokens state2
-            return (finalState, remainingTokens)
-        _ -> Left $ ExpectedList list
+    -- First get all our values
+    (listValue, state1) <- popValue state
+    (initial, state2) <- popValue state1
+    (quotation, rest) <- splitAtQuotation tokens
+    
+    -- Then use applicative style with extractListValues
+    (\lst -> (state2, [ValueToken initial] ++ concatMap (\item -> ValueToken item : quotation) lst ++ rest))
+        <$> extractListValues listValue
+
+-- | Extract values from list
+extractListValues :: Value -> Either ProgramError [Value]
+extractListValues listValue = 
+    case listValue of
+        ListValue values -> Right values
+        _ -> Left $ ExpectedList listValue
+
 
 -- | Apply function to a single item
 applyToItem :: [Token] -> State -> Value -> Either ProgramError Value
