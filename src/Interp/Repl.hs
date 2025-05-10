@@ -14,10 +14,8 @@ import Interp.Core.Types
 import Interp.Core.Error
 import Interp.Core.State
 import Interp.Engine
-import Interp.Eval.Variable
 import System.IO
 import System.Directory (doesFileExist)
-import qualified Data.Map as Map
 
 -- | Run the REPL
 runRepl :: IO ()

@@ -46,7 +46,7 @@ pop state = case stack state of
 -- Left (RuntimeError StackUnderflow)
 --
 popN :: Int -> InterpreterState -> Either InterpError ([Value], InterpreterState)
-popN n state = go n [] state
+popN n = go n []
   where
     go 0 acc s = Right (acc, s)
     go i acc s = pop s >>= \(v, s') -> go (i-1) (acc ++ [v]) s'

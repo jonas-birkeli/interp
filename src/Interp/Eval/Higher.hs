@@ -6,7 +6,6 @@ module Interp.Eval.Higher(
 
 import Interp.Core.Types
 import Interp.Core.Error
-import Interp.Core.State
 import Interp.Eval.Stack
 
 -- | Execute map operation

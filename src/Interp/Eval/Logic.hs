@@ -6,7 +6,6 @@ module Interp.Eval.Logic(
 
 import Interp.Core.Types
 import Interp.Core.Error
-import Interp.Core.State
 import Interp.Eval.Stack
 
 -- | Logical AND operation

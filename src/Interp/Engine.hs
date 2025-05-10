@@ -11,7 +11,6 @@ module Interp.Engine(
 
 import Interp.Core.Types
 import Interp.Core.Error
-import Interp.Core.State
 import Interp.Parse.Tokenize
 import Interp.Parse.Token
 import Interp.Eval.Stack

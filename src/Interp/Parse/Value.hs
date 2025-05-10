@@ -69,7 +69,7 @@ parseNumeric s
     isFloat xs = isValidFloat xs
     
     isValidFloat :: String -> Bool
-    isValidFloat s = case break (== '.') s of
+    isValidFloat i = case break (== '.') i of
         (before, '.':after) -> 
             not (null before) && all isDigit before &&
             not (null after) && all isDigit after

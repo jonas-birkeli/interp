@@ -2,7 +2,6 @@ module Interp.Parse.Tokenize(
     splitPreserveTokens
 ) where
 
-import Data.Maybe (fromMaybe, listToMaybe)
 import Interp.Core.Error
 
 -- | Convert an input string to a list of strings by handling blocks and strings

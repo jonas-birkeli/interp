@@ -7,7 +7,6 @@ module Interp.Eval.Control(
 
 import Interp.Core.Types
 import Interp.Core.Error
-import Interp.Core.State
 import Interp.Eval.Stack
 
 -- | Execute if statement by modifying the program

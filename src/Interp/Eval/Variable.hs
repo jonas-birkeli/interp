@@ -6,7 +6,6 @@ module Interp.Eval.Variable(
 
 import Interp.Core.Types
 import Interp.Core.Error
-import Interp.Core.State
 import Interp.Eval.Stack
 import qualified Data.Map as Map
 

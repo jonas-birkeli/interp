@@ -109,7 +109,7 @@ parseQuotation :: [String] -> Either InterpError (Value, [String])
 parseQuotation [] = Left . ParseError $ IncompleteQuotation "{"
 parseQuotation ("{":toks) = go [] toks
   where
-    go acc [] = Left . ParseError $ IncompleteQuotation "{"
+    go _ [] = Left . ParseError $ IncompleteQuotation "{"
     go acc ("}":rest) = Right (QuotationValue (reverse acc), rest)
     go acc ts = parseToken ts >>= \(tok, rest) -> go (tok : acc) rest
 parseQuotation _ = Left . ParseError $ UnknownToken "Expected {"
