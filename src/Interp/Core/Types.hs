@@ -1,4 +1,15 @@
-module Interp.Core.Types where
+module Interp.Core.Types (
+    Value(..),
+    Token(..),
+    ControlOp(..),
+    DefOp(..),
+    Program,
+    Stack,
+    Interrupt,
+    InterpreterState(..),
+    initialState,
+
+) where
 
 import qualified Data.Map as Map
 
