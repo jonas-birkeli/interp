@@ -15,8 +15,10 @@ import Interp.Eval.Stack
 binaryComparison :: (forall a. Ord a => a -> a -> Bool)
                 -> InterpreterState
                 -> Either InterpError InterpreterState
-binaryComparison op state = popN 2 state >>= \([v2, v1], state') ->
-    applyComparison op v1 v2 >>= \result -> Right (push (BoolValue result) state')
+binaryComparison op state = popN 2 state >>= \(values, state') ->
+    case values of
+        [v2, v1] -> applyComparison op v1 v2 >>= \result -> Right (push (BoolValue result) state')
+        _ -> Left $ RuntimeError StackUnderflow
 
 -- | Apply comparison to values
 --
@@ -52,12 +54,14 @@ applyComparison op v1 v2 = case (v1, v2) of
 -- Right [BoolValue True]
 --
 execEq :: InterpreterState -> Either InterpError InterpreterState
-execEq state = popN 2 state >>= \([v2, v1], state') ->
-    let result = case (v1, v2) of
-            (IntValue i1, FloatValue f2) -> fromIntegral i1 == f2
-            (FloatValue f1, IntValue i2) -> f1 == fromIntegral i2
-            _ -> v1 == v2
-    in Right (push (BoolValue result) state')
+execEq state = popN 2 state >>= \(values, state') ->
+    case values of
+        [v2, v1] -> let result = case (v1, v2) of
+                            (IntValue i1, FloatValue f2) -> fromIntegral i1 == f2
+                            (FloatValue f1, IntValue i2) -> f1 == fromIntegral i2
+                            _ -> v1 == v2
+                    in Right (push (BoolValue result) state')
+        _ -> Left $ RuntimeError StackUnderflow
 
 -- | Comparison operations
 execLt :: InterpreterState -> Either InterpError InterpreterState
