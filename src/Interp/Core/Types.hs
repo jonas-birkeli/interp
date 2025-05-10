@@ -1,14 +1,13 @@
-module Interp.Core.Types (
-    Value(..),
-    Token(..),
-    ControlOp(..),
-    DefOp(..),
-    Program,
-    Stack,
-    Interrupt,
-    InterpreterState(..),
-    initialState,
-
+module Interp.Core.Types(
+   Value(..),
+   Token(..),
+   ControlOp(..),
+   DefOp(..),
+   Program,
+   Stack,
+   Dictionary,
+   Interrupt(..),
+   InterpreterState(..)
 ) where
 
 import qualified Data.Map as Map
@@ -29,7 +28,7 @@ instance Show Value where
     show (IntValue i) = show i
     show (FloatValue f) = show f
     show (BoolValue b) = show b
-    show (StringValue s) = show s
+    show (StringValue s) = "\"" ++ s ++ "\""
     show (ListValue vs) = show vs
     show (QuotationValue ts) = "{ " ++ unwords (map show ts) ++ " }"
     show (SymbolValue s) = s
@@ -95,13 +94,4 @@ data InterpreterState = InterpreterState
     , stack :: Stack
     , program :: Program
     , interrupt :: Maybe Interrupt
-    }
-
--- | Create initial state
-initialState :: InterpreterState
-initialState = InterpreterState
-    { dict = Map.empty
-    , stack = []
-    , program = []
-    , interrupt = Nothing
     }
