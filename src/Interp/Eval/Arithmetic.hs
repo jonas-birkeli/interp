@@ -18,8 +18,10 @@ import Interp.Eval.Stack
 binaryArithmetic :: (Double -> Double -> Double) 
                 -> InterpreterState 
                 -> Either InterpError InterpreterState
-binaryArithmetic op state = popN 2 state >>= \([v2, v1], state') ->
-    applyArithmetic op v1 v2 >>= \result -> Right (push result state')
+binaryArithmetic op state = popN 2 state >>= \(values, state') ->
+    case values of
+        [v2, v1] -> applyArithmetic op v1 v2 >>= \result -> Right (push result state')
+        _ -> Left $ RuntimeError StackUnderflow
 
 -- | Apply arithmetic operation to values
 --
@@ -58,8 +60,10 @@ applyArithmetic op v1 v2 = case (v1, v2) of
 -- Left (RuntimeError DivisionByZero)
 --
 execIntDiv :: InterpreterState -> Either InterpError InterpreterState
-execIntDiv state = popN 2 state >>= \([v2, v1], state') ->
-    applyIntDiv v1 v2 >>= \result -> Right (push result state')
+execIntDiv state = popN 2 state >>= \(values, state') ->
+    case values of
+        [v2, v1] -> applyIntDiv v1 v2 >>= \result -> Right (push result state')
+        _ -> Left $ RuntimeError StackUnderflow
 
 -- | Apply integer division
 --
@@ -89,8 +93,10 @@ applyIntDiv v1 v2 = case (v1, v2) of
 -- Right [FloatValue 3.3333333333333335]
 --
 execFloatDiv :: InterpreterState -> Either InterpError InterpreterState
-execFloatDiv state = popN 2 state >>= \([v2, v1], state') ->
-    applyFloatDiv v1 v2 >>= \result -> Right (push result state')
+execFloatDiv state = popN 2 state >>= \(values, state') ->
+    case values of
+        [v2, v1] -> applyFloatDiv v1 v2 >>= \result -> Right (push result state')
+        _ -> Left $ RuntimeError StackUnderflow
 
 -- | Apply float division
 --
