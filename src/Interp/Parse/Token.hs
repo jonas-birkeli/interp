@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Interp.Parse.Token(
     parseControl,
     parseDefinition,
@@ -85,12 +86,13 @@ parseList :: [String] -> Either InterpError (Value, [String])
 parseList [] = Left . ParseError $ IncompleteList "["
 parseList ("[":toks) = go [] toks
   where
-    go acc [] = Left . ParseError $ IncompleteList "["
+    go _ [] = Left . ParseError $ IncompleteList "["
     go acc ("]":rest) = Right (ListValue (reverse acc), rest)
     go acc ("[":rest) = parseList ("[":rest) >>= \(nested, rest') ->
         go (nested : acc) rest'
-    go acc ("{":rest) = parseQuotation ("{":rest) >>= \(QuotationValue ts, rest') ->
-        go (QuotationValue ts : acc) rest'
+    go acc ("{":rest) = parseQuotation ("{":rest) >>= \case
+        (q@(QuotationValue _), rest') -> go (q : acc) rest'
+        (_, _) -> Left . ParseError $ UnknownToken "Expected quotation"
     go acc (t:rest) = parseValue t >>= \v -> go (v : acc) rest
 parseList _ = Left . ParseError $ UnknownToken "Expected ["
 

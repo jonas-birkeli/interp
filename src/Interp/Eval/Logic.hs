@@ -19,10 +19,13 @@ import Interp.Eval.Stack
 -- Right [BoolValue False]
 --
 execAnd :: InterpreterState -> Either InterpError InterpreterState
-execAnd state = popN 2 state >>= \([v2, v1], state') ->
-    case (v1, v2) of
-        (BoolValue b1, BoolValue b2) -> Right $ push (BoolValue (b1 && b2)) state'
-        _ -> Left . RuntimeError $ typeMismatch "boolean" v1
+execAnd state = popN 2 state >>= \(values, state') ->
+    case values of
+        [v2, v1] ->
+            case (v1, v2) of
+                (BoolValue b1, BoolValue b2) -> Right $ push (BoolValue (b1 && b2)) state'
+                _ -> Left . RuntimeError $ typeMismatch "boolean" v1
+        _ -> Left $ RuntimeError StackUnderflow
 
 -- | Logical OR operation
 --
@@ -35,10 +38,13 @@ execAnd state = popN 2 state >>= \([v2, v1], state') ->
 -- Right [BoolValue False]
 --
 execOr :: InterpreterState -> Either InterpError InterpreterState
-execOr state = popN 2 state >>= \([v2, v1], state') ->
-    case (v1, v2) of
-        (BoolValue b1, BoolValue b2) -> Right $ push (BoolValue (b1 || b2)) state'
-        _ -> Left . RuntimeError $ typeMismatch "boolean" v1
+execOr state = popN 2 state >>= \(values, state') ->
+    case values of
+        [v2, v1] -> 
+            case (v1, v2) of
+                (BoolValue b1, BoolValue b2) -> Right $ push (BoolValue (b1 || b2)) state'
+                _ -> Left . RuntimeError $ typeMismatch "boolean" v1
+        _ -> Left $ RuntimeError StackUnderflow
 
 -- | Logical NOT operation
 --

@@ -11,7 +11,6 @@ module Interp.Eval.Stack(
 
 import Interp.Core.Types
 import Interp.Core.Error
-import Interp.Core.State
 
 -- | Push a value onto the stack
 --

@@ -107,8 +107,8 @@ parseBoolean s = Left . ParseError $ UnknownToken s
 --
 parseValue :: String -> Either InterpError Value
 parseValue "" = Left . ParseError $ UnknownToken ""
-parseValue s
-    | head s == '"' = parseString s
+parseValue s@(c:_)
+    | c == '"' = parseString s
     | s `elem` ["True", "False"] = parseBoolean s
     | isNumeric s = parseNumeric s
     | otherwise = Right $ SymbolValue s
