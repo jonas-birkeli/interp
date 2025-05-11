@@ -41,7 +41,25 @@ ghc-options:
 
 library:
   source-dirs: src
-
+  exposed-modules:
+    - Interp.Core.Types
+    - Interp.Core.Error
+    - Interp.Core.State
+    - Interp.Parse.Tokenize
+    - Interp.Parse.Token
+    - Interp.Parse.Value
+    - Interp.Eval.Stack
+    - Interp.Eval.Arithmetic
+    - Interp.Eval.Comparison
+    - Interp.Eval.Logic
+    - Interp.Eval.Control
+    - Interp.Eval.Higher
+    - Interp.Eval.List
+    - Interp.Eval.String
+    - Interp.Eval.Variable
+    - Interp.Eval.IO
+    - Interp.Engine
+    - Interp.Repl
 executables:
   interpreter-exe:
     main:                Main.hs
