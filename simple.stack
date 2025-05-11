@@ -1,7 +1,0 @@
-factorial {
-  dup 0 == if
-  { pop 1 }
-  { dup 1 - factorial * }
-} fun
-
-5 factorial
