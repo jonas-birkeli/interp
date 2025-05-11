@@ -1,0 +1,24 @@
+fizzbuzz {
+    dup dup 15 div 15 * == if {
+        pop " FizzBuzz " print
+    } {
+        dup dup 3 div 3 * == if {
+            pop " Fizz " print  
+        } {
+            dup dup 5 div 5 * == if {
+                pop " Buzz " print
+            } {
+                print
+            }
+        }
+    }
+} fun
+
+1
+loop { dup 15 > } {
+    dup fizzbuzz
+    1 +
+}
+pop
+
+0

@@ -6,12 +6,12 @@ cabal-version: 2.2
 
 name:           interpreter
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/interpreter#readme>
-homepage:       https://github.com/githubuser/interpreter#readme
-bug-reports:    https://github.com/githubuser/interpreter/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2025 Author name here
+description:    Please see the README on GitHub at <https://github.com/jonas-birkeli/interp#readme>
+homepage:       https://github.com/jonas-birkeli/interp#readme
+bug-reports:    https://github.com/jonas-birkeli/interp/issues
+author:         Jonas Birkeli
+maintainer:     jonas.birkeli@hotmail.no
+copyright:      2025 Jonas Birkeli
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
@@ -21,15 +21,28 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/interpreter
+  location: https://github.com/jonas-birkeli/interpr
 
 library
   exposed-modules:
-      Interpreter
-      Lib
-      Parser
-      Tokenizer
-      Types
+      Interp.Core.Types
+      Interp.Core.Error
+      Interp.Core.State
+      Interp.Parse.Tokenize
+      Interp.Parse.Token
+      Interp.Parse.Value
+      Interp.Eval.Stack
+      Interp.Eval.Arithmetic
+      Interp.Eval.Comparison
+      Interp.Eval.Logic
+      Interp.Eval.Control
+      Interp.Eval.Higher
+      Interp.Eval.List
+      Interp.Eval.String
+      Interp.Eval.Variable
+      Interp.Eval.IO
+      Interp.Engine
+      Interp.Repl
   other-modules:
       Paths_interpreter
   autogen-modules:
@@ -38,7 +51,8 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
     , bytestring
     , containers
     , directory
@@ -56,7 +70,8 @@ executable interpreter-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
     , bytestring
     , containers
     , directory
@@ -76,11 +91,13 @@ test-suite interpreter-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
     , bytestring
     , containers
     , directory
     , extra
+    , hspec
     , interpreter
     , mtl
   default-language: Haskell2010
